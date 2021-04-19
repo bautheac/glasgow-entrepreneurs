@@ -1,0 +1,18 @@
+---
+title: "notes"
+author: "Olivier Bauthéac"
+date: "19/03/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## References ####
+
+* [The Hedonic Regression: Step-by-Step](https://www.youtube.com/watch?v=xu0prYu5e-c&ab_channel=AliNasserEddine)  
+* [Example of Hedonic Regression Using Large Data: an Art Index](https://www.youtube.com/watch?v=X9AAh2emZp0&ab_channel=AliNasserEddine)
+
+

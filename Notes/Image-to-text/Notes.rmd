@@ -1,0 +1,20 @@
+---
+title: "notes"
+author: "Olivier Bauthéac"
+date: "19/03/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## References ####
+
+### R ####
+* [Tesseract OCR engine](https://cran.r-project.org/web/packages/tesseract/vignettes/intro.html)
+
+### Python ####
+* [OCR 1](https://www.pyimagesearch.com/2020/08/17/ocr-with-keras-tensorflow-and-deep-learning/)
+* [OCR 2](https://www.pyimagesearch.com/2020/08/24/ocr-handwriting-recognition-with-opencv-keras-and-tensorflow/)
