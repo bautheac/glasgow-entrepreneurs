@@ -24,6 +24,8 @@ pre_clean <- function(address){
   clean <- clean_attached_words(clean)
   # M' to Mc
   clean <- clean_mac(clean)
+  # Saints
+  clean <- clean_saints(clean)
   # Suffixes
   clean <- clean_suffixes(clean)
   
@@ -44,6 +46,18 @@ post_clean <- function(address){
 clean_mac <- function(address){
   
   clean <- gsub("M\\s?['c](?=\\w)", "Mac", address, ignore.case = FALSE, perl = TRUE)
+  
+  clean
+}
+
+
+clean_saints <- function(address){
+
+  clean <- gsub(
+    "(?<=^|st\\.\\s)\\bst(?:reet)?\\.?\\s+(?=[ae]n[dno]|da|[gp]e[ot]|[jm]a[mr]|mun|ni[cn]|ro)", 
+    "Saint ", 
+    address, ignore.case = TRUE, perl = TRUE
+  )
   
   clean
 }
@@ -135,7 +149,6 @@ clean_places <- function(address){
   clean <- gsub("\\b(street)\\b\\S?(?=\\s)", "\\1", clean, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("(\\w)\\1st", "\\1\\1 Street", clean, ignore.case = TRUE, perl = TRUE)
   # clean <- gsub("(\\w)street\\.?", "\\1 Street", clean, ignore.case = TRUE, perl = TRUE)
-  clean <- gsub("street\\s*(?=Andrew|George|Roll?o?x?|Vincent|Mungo)", "Saint ", clean, ignore.case = TRUE, perl = TRUE)
   # Terrace
   clean <- gsub("\\bter(?:race)?\\b\\.?", "Terrace", clean, ignore.case = TRUE, perl = TRUE)
   # Wynd
