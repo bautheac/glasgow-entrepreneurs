@@ -145,22 +145,22 @@ back_raw <- openxlsx::read.xlsx(
   dplyr::filter(type == "OWN ACCOUNT") %>% dplyr::select(-c(type)) %>%
   dplyr::arrange(address.trade.street, address.trade.number)
 
-# test <- dplyr::filter(
-#   professions_raw, 
-#   # stringr::str_detect(address.trade.street, "(?i)Avondale")
-#   stringr::str_detect(surname, "Wallace"),
-#   stringr::str_detect(forename, "John")
-# )
-file_path <- here::here("Data", "Trade-directories-sample.xlsx")
-openxlsx::write.xlsx(
-  dplyr::filter(
-    back_raw, 
-    stringr::str_detect(address.trade.street, "^[AB]")
-  ), 
-  file_path, 
-  sheetName = "professions-raw",
-  append = TRUE
+test <- dplyr::filter(
+  back_raw,
+  # stringr::str_detect(address.trade.street, "(?i)Avondale")
+  stringr::str_detect(surname, "Bawden"),
+  stringr::str_detect(forename, "John")
 )
+# file_path <- here::here("Data", "Trade-directories-sample.xlsx")
+# openxlsx::write.xlsx(
+#   dplyr::filter(
+#     back_raw, 
+#     stringr::str_detect(address.trade.street, "^[AB]")
+#   ), 
+#   file_path, 
+#   sheetName = "professions-raw",
+#   append = TRUE
+# )
 
 back_clean <- dplyr::mutate(
   back_raw,
@@ -196,6 +196,10 @@ openxlsx::saveWorkbook(wb, file = file_path, overwrite = TRUE)
 
 
 
+clean_address("Newstreet. Calton.")
+
+
+
 
 
 test <- "Main st. Anderst."
@@ -228,6 +232,8 @@ test <- clean_address(test)
 test <- "Argyle ar."
 test <- gsub("\\bar(?:c|ea)?(?:ade)?\\b\\.?", "Arcade", test, ignore.case = TRUE, perl = TRUE)
 
+test <- "Muslin Street, Bridg."
+test <- gsub("\\bMuslin Street[,\\s]+Br(?:id)?g?e?t?o?n?\\b\\.?", "Muslin Street, Bridgeton", test, ignore.case = TRUE, perl = TRUE)
 
 
 m <- gregexpr("^[A-Z][a-z]{2,}$", professions$forename, perl = TRUE)
