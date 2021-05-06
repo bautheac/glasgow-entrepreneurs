@@ -148,8 +148,8 @@ back_raw <- openxlsx::read.xlsx(
 test <- dplyr::filter(
   back_raw,
   # stringr::str_detect(address.trade.street, "(?i)Avondale")
-  stringr::str_detect(surname, "Bawden"),
-  stringr::str_detect(forename, "John")
+  stringr::str_detect(surname, "Ross"),
+  stringr::str_detect(forename, "A.")
 )
 # file_path <- here::here("Data", "Trade-directories-sample.xlsx")
 # openxlsx::write.xlsx(
@@ -174,9 +174,9 @@ back_clean <- dplyr::mutate(
 test <- dplyr::filter(
   back_clean,
   # stringr::str_detect(address.trade.street, "(?i)Port")
-  stringr::str_detect(address.trade.street, "(?i)Rol")
-  # stringr::str_detect(surname, "Struthers"),
-  # stringr::str_detect(forename, "Thos.")
+  # stringr::str_detect(address.trade.street, "Saint And.*")
+  stringr::str_detect(surname, "Warden"),
+  stringr::str_detect(forename, "Archd.")
 ) %>% dplyr::arrange(surname)
 # test <- dplyr::filter(professions_clean, stringr::str_detect(address.trade.street, "(?i)\\bq.*y\\b"))
 
@@ -196,8 +196,10 @@ openxlsx::saveWorkbook(wb, file = file_path, overwrite = TRUE)
 
 
 
-clean_address("Newstreet. Calton.")
 
+clean_address("Newstreet. Calton.")
+clean_saints("Castle st. St. Rollox.")
+clean_possessives("Saint James’. Kingston.")
 
 
 
@@ -234,6 +236,10 @@ test <- gsub("\\bar(?:c|ea)?(?:ade)?\\b\\.?", "Arcade", test, ignore.case = TRUE
 
 test <- "Muslin Street, Bridg."
 test <- gsub("\\bMuslin Street[,\\s]+Br(?:id)?g?e?t?o?n?\\b\\.?", "Muslin Street, Bridgeton", test, ignore.case = TRUE, perl = TRUE)
+
+test <- "Westmin, Terrace"
+test <- gsub(paste0(",\\s+(", paste(places, collapse = "|"), ")"), " \\1", test, ignore.case = TRUE, perl = TRUE)
+
 
 
 m <- gregexpr("^[A-Z][a-z]{2,}$", professions$forename, perl = TRUE)

@@ -1,5 +1,12 @@
 
 
+places <- c(
+  "Arcade", "Arches", "Bridge", "Circus", "Close", "Court", "Crescent", "Drive",
+  "Garden", "Lane", "Loan", "Place", "Port", "Quay", "Road", "Square", "Street",
+  "Terrace", "Wynd"
+)
+
+
 clean_address <- function(raw){
   
   # Pre-clean
@@ -8,8 +15,6 @@ clean_address <- function(raw){
   clean <- clean_places(clean)
   # Names
   clean <- clean_names(clean)
-  # Special characters
-  clean <- clean_specials(clean)
   # Post clean
   clean <- post_clean(clean)
   
@@ -18,14 +23,18 @@ clean_address <- function(raw){
 
 pre_clean <- function(address){
   
+  # Special characters
+  clean <- clean_specials(address)
   # Clean ends
-  clean <- clean_ends(address)
+  clean <- clean_ends(clean)
   # Separate words
   clean <- clean_attached_words(clean)
   # M' to Mc
   clean <- clean_mac(clean)
   # Saints
   clean <- clean_saints(clean)
+  # Possessives
+  clean <- clean_possessives(clean)
   # Suffixes
   clean <- clean_suffixes(clean)
   
@@ -52,9 +61,13 @@ clean_mac <- function(address){
 
 
 clean_saints <- function(address){
-
+  
   clean <- gsub(
-    "(?<=^|st\\.\\s)\\bst(?:reet)?\\.?\\s+(?=[ae]n[dno]|da|[gp]e[ot]|[jm]a[mr]|mun|ni[cn]|ro)", 
+    paste0(
+      "(?<=^|s\\.\\s|st\\.\\s|street\\.\\s|west\\s|terrace\\.\\s|place\\.\\s)",
+      "\\bst\\.?\\s+",
+      "(?=en|[ae]n[dno]|da|[gp]e[ot]|[jm][ao][hmrs]|mu[nr]|[nv]i[cn]|ro)"
+    ), 
     "Saint ", 
     address, ignore.case = TRUE, perl = TRUE
   )
@@ -63,9 +76,19 @@ clean_saints <- function(address){
 }
 
 
+clean_possessives <- function(address){
+  
+  clean <- gsub("\\b(\\w+)\\b\\.?'?s'?", "\\1s", address, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("(\\b\\w+s\\b)'\\.?", "\\1", clean, ignore.case = TRUE, perl = TRUE)
+  
+  clean
+}
+
+
 clean_specials <- function(address){
   
   clean <- gsub("»", "", address, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("’", "'", clean, ignore.case = TRUE, perl = TRUE)
   
   clean
 }
@@ -76,6 +99,8 @@ clean_ends <- function(address){
   # clean <- stringr::str_squish(address)
   clean <- gsub("^\\s+", "", address, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("\\s{2,}", " ", clean, ignore.case = TRUE, perl = TRUE)
+  
+  # Place period at the end of address if none
   clean <- gsub("[,'.\\s]+$", "\\.", clean, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("([^.])$", "\\1\\.", clean, ignore.case = TRUE, perl = TRUE)
   
@@ -129,7 +154,7 @@ clean_places <- function(address){
   # clean <- gsub("\\b[IL]o?a?n?\\.?", "Loan", clean, ignore.case = TRUE, perl = TRUE)
   # clean <- gsub("(\\w)loan\\.?", "\\1 Loan", clean, ignore.case = TRUE, perl = TRUE)
   # Place
-  clean <- gsub("\\bp[il](?:ace)?\\b\\.?", "Place", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bp[il]a?(?:ce)?\\b\\.?", "Place", clean, ignore.case = TRUE, perl = TRUE)
   # Port
   clean <- gsub("\\bp(?:or)?t?\\b[,.]?", "Port", clean, ignore.case = TRUE, perl = TRUE)
   # Quay 
@@ -143,7 +168,7 @@ clean_places <- function(address){
   # Street
   # clean <- gsub("\\.st(?:reet)?\\.?", " Street", clean, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("(?<=Dale|Hope|John|Kirk|Little|New)st(?:reet)?\\.?", " Street", clean, ignore.case = TRUE, perl = TRUE)
-  clean <- gsub("\\b[iaes]t[ri]?[ie]?(?:et)?\\b\\.?", "Street", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("(?<!^)\\b[iaes]t[ri]?[ie]?(?:et)?\\b\\.?", "Street", clean, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("\\bstr[e']+t\\b\\.?", "Street", clean, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("(street)(?=[a-z])", "\\1 ", clean, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("\\b(street)\\b\\S?(?=\\s)", "\\1", clean, ignore.case = TRUE, perl = TRUE)
@@ -197,12 +222,8 @@ clean_names <- function(address){
   # clean <- gsub("\\bAnd?e?r?s?t?o?n?\\b\\.?", "Anderston", clean, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("\\bAn((?!n\\s))(?(1)d?e?r?s?t?o?n?\\b)\\.?", "Anderston", clean, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("\\bAnderstreet\\b\\.?", "Anderston", clean, ignore.case = TRUE, perl = TRUE)
-  # Anderstons 
-  clean <- gsub("\\bAnderston'?s'?", "Anderstons", clean, ignore.case = TRUE, perl = TRUE)
-  # Andrews
-  clean <- gsub("\\bAndr?e?w", "Andrew", clean, ignore.case = TRUE, perl = TRUE)
-  # Andrews
-  clean <- gsub("\\bAndrew'?s'?", "Andrews", clean, ignore.case = TRUE, perl = TRUE)
+  # Andrew
+  clean <- gsub("\\bAndr?e?w[,.]?", "Andrew", clean, ignore.case = TRUE, perl = TRUE)
   # Annfield
   clean <- gsub("\\bAnnfi(?:eld)?\\b\\.?", "Annfield", clean, ignore.case = TRUE, perl = TRUE)
   # Argyle
@@ -227,7 +248,7 @@ clean_names <- function(address){
   # Blythswood
   clean <- gsub("\\bBlythsw?(?:ood)?\\b\\.?", "Blythswood", clean, ignore.case = TRUE, perl = TRUE)
   # Bothwell
-  clean <- gsub("both\\s?well", "Bothwell", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("both\\s?w?(?:ell)?", "Bothwell", clean, ignore.case = TRUE, perl = TRUE)
   # Bridgegate
   # clean <- gsub("\\bBri?d?g?(?:eg)?a?t?e?\\b\\.?", "Bridgegate", clean, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("\\bBridge(g)(?(1)(?:eg)?a?t?e?\\b)\\.?", "Bridgegate", clean, ignore.case = TRUE, perl = TRUE)
@@ -236,7 +257,9 @@ clean_names <- function(address){
   # clean <- gsub("\\bBridge(t)(?(1)(?:on)?\\b)\\.?", "Bridgeton", clean, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("\\bBri?d?g?e?([tn])(?(1)(?:on)?\\b)\\.?", "Bridgeton", clean, ignore.case = TRUE, perl = TRUE)
   # Bromielaw
-  clean <- gsub("\\bBroo?m([^h]?)(?(1)[et]?\\s?(?:law)?\\b)\\.?", "Broomielaw", clean, ignore.case = TRUE, perl = TRUE)
+  # clean <- gsub("\\bBroo?m([^h]?)(?(1)[et]?\\s?(?:law)?\\b)\\.?", "Broomielaw", clean, ignore.case = TRUE, perl = TRUE)
+  # Brooinielaw
+  clean <- gsub("\\bBroo?[mi]n?([^h]?)(?(1)(?:[eit]+)?\\s?(?:law)?\\b)\\.?", "Broomielaw", clean, ignore.case = TRUE, perl = TRUE)
   # Brunswick
   clean <- gsub("\\bBrunsw?(?:ic)?k?\\b\\.?", "Brunswick", clean, ignore.case = TRUE, perl = TRUE)
   # Buccleuch
@@ -249,6 +272,8 @@ clean_names <- function(address){
   clean <- gsub("\\bCaltonmouth\\b\\.?", "Calton-mouth", clean, ignore.case = TRUE, perl = TRUE)
   # Cambridge
   clean <- gsub("\\bCa(?:m|in)br?(?:id)?g?e?\\b\\.?", "Cambridge", clean, ignore.case = TRUE, perl = TRUE)
+  # Campbell 
+  clean <- gsub("\\bCampb?e?l?l?\\b\\.?", "Cambridge", clean, ignore.case = TRUE, perl = TRUE)
   # Canning
   clean <- gsub("\\bCann?(?:ing)?\\b\\.?", "Canning", clean, ignore.case = TRUE, perl = TRUE)
   # Candleriggs
@@ -313,9 +338,9 @@ clean_names <- function(address){
   # Garscube
   clean <- gsub("\\bGarsc[un]?b?e?\\b\\.?", "Garscube", clean, ignore.case = TRUE, perl = TRUE)
   # George
-  clean <- gsub("\\bGeo(?:rg)?e?\\b'?s?\\.?", "George", clean, ignore.case = TRUE, perl = TRUE)
-  # Georges
-  clean <- gsub("\\bGeorge\\b'?s'?\\.?", "Georges", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bGeo(?:rg)?e?\\.?", "George", clean, ignore.case = TRUE, perl = TRUE)
+  # George Street
+  clean <- gsub("\\bGeorgest\\b\\.?", "George Street", clean, ignore.case = TRUE, perl = TRUE)
   # Gorbals
   clean <- gsub("\\bGorb?a?[il]?s?\\b\\.?", "Gorbals", clean, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("\\b(Gorbals).?\\b", "\\1", clean, ignore.case = TRUE, perl = TRUE)
@@ -329,6 +354,8 @@ clean_names <- function(address){
   clean <- gsub("\\bGord(?:on)?\\b\\.?", "Gordon", clean, ignore.case = TRUE, perl = TRUE)
   # Graeme
   clean <- gsub("\\bGra[em]?(?:me)?\\b\\.?", "Graeme", clean, ignore.case = TRUE, perl = TRUE)
+  # Greenhead
+  clean <- gsub("\\bGreenh?(?:ead)?\\b\\.?", "Greenhead", clean, ignore.case = TRUE, perl = TRUE)
   # Hamilton
   clean <- gsub("\\bHam(?:il)?t?(?:on)?\\b\\.?", "Hamilton", clean, ignore.case = TRUE, perl = TRUE)
   # Hillhead
@@ -342,7 +369,7 @@ clean_names <- function(address){
   # Hospital
   clean <- gsub("\\bHosp(?:ital)?\\b\\.?", "Hospital", clean, ignore.case = TRUE, perl = TRUE)
   # Howard
-  clean <- gsub("\\bHow(?:ard)?\\b\\.?", "Howard", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bHowa?r?d?\\b\\.?", "Howard", clean, ignore.case = TRUE, perl = TRUE)
   # Hutcheson 
   clean <- gsub("\\bHut[ce]?h?e?s?o?n?\\b\\.?", "Hutcheson", clean, ignore.case = TRUE, perl = TRUE)
   # Hutchesontown
@@ -392,6 +419,8 @@ clean_names <- function(address){
   clean <- gsub("\\bMaxweltow?n\\b\\.?", "Maxweltown", clean, ignore.case = TRUE, perl = TRUE)
   # Merchant
   clean <- gsub("\\bMerch(?:an)?t?\\b\\.?", "Merchant", clean, ignore.case = TRUE, perl = TRUE)
+  # Milton
+  clean <- gsub("\\Milt(?:on)?\\b\\.?", "Milton", clean, ignore.case = TRUE, perl = TRUE)
   # Moore
   clean <- gsub("\\bMoore?\\b\\.?", "Moore", clean, ignore.case = TRUE, perl = TRUE)
   # Muslin Street
@@ -450,6 +479,8 @@ clean_names <- function(address){
   clean <- gsub("\\bQueen'?s'?[ –]+(\\w+)", "Queens \\1", clean, ignore.case = TRUE, perl = TRUE)
   # Railway
   clean <- gsub("\\bRailw(?:ay)?\\b\\.?", "Railway", clean, ignore.case = TRUE, perl = TRUE)
+  # Regent
+  clean <- gsub("\\bReg(?:en)?t?\\b\\.?", "Regent", clean, ignore.case = TRUE, perl = TRUE)
   # Reid Street, Bridgeton
   clean <- gsub("\\bReid(?:st)?\\b.+(?:Street\\.?|Bridg.+)", "Reid Street, Bridgeton", clean, ignore.case = TRUE, perl = TRUE)
   # Renfield
@@ -474,6 +505,8 @@ clean_names <- function(address){
   clean <- gsub("\\bR.+\\bExc?h?(?:an)?(?:ange)?\\b\\.?", "Royal Exchange", clean, ignore.case = TRUE, perl = TRUE)
   # Rutherglen Loan
   clean <- gsub("\\bRuther([^f])(?(1).+)", "Rutherglen Loan", clean, ignore.case = TRUE, perl = TRUE)
+  # Saint James Street, Kingston
+  clean <- gsub("^Saint\\s+James\\s+Street.+kin.+", "Saint James Street, Kingston", clean, ignore.case = TRUE, perl = TRUE)
   # Saint Rollox
   clean <- gsub("^Saint Rollox.+", "Saint Rollox", clean, ignore.case = TRUE, perl = TRUE)
   # Salisbury
@@ -482,8 +515,6 @@ clean_names <- function(address){
   clean <- gsub("\\bSalt.?ma?r?k?e?t?\\b\\.?", "Saltmarket", clean, ignore.case = TRUE, perl = TRUE)
   # Sandyford
   clean <- gsub("\\bSandy?f?(?:ord)?\\b\\.?", "Sandyford", clean, ignore.case = TRUE, perl = TRUE)
-  # Saracen's
-  clean <- gsub("\\bSaracen'?s'?[ –]+(\\w+)", "Saracens \\1", clean, ignore.case = TRUE, perl = TRUE)
   # Sauchiehall
   clean <- gsub("\\bSa[nu][ce][bhl]?i?i?e?[bh]?a?(?:ll)?\\b\\.?", "Sauchiehall", clean, ignore.case = TRUE, perl = TRUE)
   # Sauchiehall Street
@@ -494,34 +525,73 @@ clean_names <- function(address){
   clean <- gsub("\\bShawl(?:an)?ds\\b\\.?", "Shawlands", clean, ignore.case = TRUE, perl = TRUE)
   # Shettleston
   clean <- gsub("\\bShettles(?:ton)?\\b\\.?", "Shettleston", clean, ignore.case = TRUE, perl = TRUE)
-  # Smith's
-  clean <- gsub("\\bSmith'?s'?[ –]+(\\w+)", "Smiths \\1", clean, ignore.case = TRUE, perl = TRUE)
   # Somerville
   clean <- gsub("\\bSomm?erville\\b\\.?", "Somerville", clean, ignore.case = TRUE, perl = TRUE)
   # South side, Glasgow Harbour
   clean <- gsub("\\bSouth\\sside.+harb.+", "South side, Glasgow Harbour", clean, ignore.case = TRUE, perl = TRUE)
   # Spoutmouth
   clean <- gsub("\\bSp.?outmouth\\b", "Spoutmouth", clean, ignore.case = TRUE, perl = TRUE)
+  # Springfield
+  ## name
+  clean <- gsub("\\bSpringf(?:iel)?d?\\b", "Springfield", clean, ignore.case = TRUE, perl = TRUE)
+  ## suffixes
+  clean <- gsub("\\bSpringfield\\b[,\\s]+(?!lane|court|place).+", "Springfield.", clean, ignore.case = TRUE, perl = TRUE)
   # Stirling 
   clean <- gsub("\\bStirl(?:ing)?\\b\\.?", "Stirling", clean, ignore.case = TRUE, perl = TRUE)
-  # Stirling's 
-  clean <- gsub("\\bStirling'?s'?", "Stirlings", clean, ignore.case = TRUE, perl = TRUE)
   # Stobcross
   clean <- gsub("\\bStobc?r?o?s?[as]?\\b\\.?", "Stobcross", clean, ignore.case = TRUE, perl = TRUE)
   # Stobcross Street
-  clean <- gsub("\\bStobc?r?o?s?[as]?\\b\\.?(?:\\s+Street|\\s+\\w+[,.$])?", "Stobcross Street", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bSt[osu]bc?r?o?s?[as]?\\b\\.?(?:\\s+Street|\\s+\\w+[,.$])?", "Stobcross Street", clean, ignore.case = TRUE, perl = TRUE)
   # Stockwell
   clean <- gsub("\\bStockw?e?l?l?(?:ell)?\\b\\.?", "Stockwell", clean, ignore.case = TRUE, perl = TRUE)
+  # Struthers Street
+  clean <- gsub("\\bStrutherss?t?\\b\\.?(?:\\s+street)?", "Struthers Street", clean, ignore.case = TRUE, perl = TRUE)
+  # Tennent 
+  clean <- gsub("\\bTenn?[ae]nt\\b\\.?", "Tennent", clean, ignore.case = TRUE, perl = TRUE)
   # Thistle
   clean <- gsub("\\bThis(?:tle)?\\b\\.?", "Thistle", clean, ignore.case = TRUE, perl = TRUE)
   # Townhead
   clean <- gsub("\\bTownh(?:ead)?\\b\\.?", "Townhead", clean, ignore.case = TRUE, perl = TRUE)
+  # Townmill 
+  clean <- gsub("\\bTowns?(?:\\s+)?mill\\b\\.?", "Townmill", clean, ignore.case = TRUE, perl = TRUE)
   # Tradeston
   clean <- gsub("\\bTr(?:ad)?e?s?t?o?n?\\b\\.?", "Tradeston", clean, ignore.case = TRUE, perl = TRUE)
+  # Trongate
+  clean <- gsub("\\bTrong(?:ate)?\\b\\.?", "Trongate", clean, ignore.case = TRUE, perl = TRUE)
+  # Upperfauld
+  clean <- gsub("\\bUpper(?:\\s+)?fauld\\b\\.?", "Upperfauld", clean, ignore.case = TRUE, perl = TRUE)
+  # Victoria
+  clean <- gsub("\\bVict(?:oria)?\\b\\.?", "Victoria", clean, ignore.case = TRUE, perl = TRUE)
   # Vincent
   clean <- gsub("\\bVin[ec]?e?n?t?\\b\\.?", "Vincent", clean, ignore.case = TRUE, perl = TRUE)
+  # Violet grove
+  clean <- gsub("\\bViolet\\s+gro(?:ve)?\\b\\.?", "Violet grove", clean, ignore.case = TRUE, perl = TRUE)
+  # Virginia 
+  clean <- gsub("\\bVirg(?:inia)?\\b\\.?", "Virginia", clean, ignore.case = TRUE, perl = TRUE)
+  # Walmer Crescent
+  clean <- gsub("\\bWalm.+cr.+\\b\\.?", "Walmer Crescent", clean, ignore.case = TRUE, perl = TRUE)
+  # Warroch 
+  clean <- gsub("\\bWa[nr]r?(?:och)?\\b\\.?", "Warroch", clean, ignore.case = TRUE, perl = TRUE)
+  # Washington
+  clean <- gsub("\\bWashingt(?:on)?\\b\\.?", "Washington", clean, ignore.case = TRUE, perl = TRUE)
+  # Water
+  clean <- gsub("\\bWater\\b-?\\.?", "Water", clean, ignore.case = TRUE, perl = TRUE)
   # Wellington 
   clean <- gsub("\\bWelling(?:on)?\\b\\.?", "Wellington", clean, ignore.case = TRUE, perl = TRUE)
+  # Wemyss
+  clean <- gsub("\\bWemyss?\\b\\.?", "Wemyss", clean, ignore.case = TRUE, perl = TRUE)
+  # West Street, Tradeston
+  clean <- gsub("\\bWest\\s+str.+(?:\\s+)?trad.+\\b\\.?", "West Street, Tradeston", clean, ignore.case = TRUE, perl = TRUE)
+  # Willowbank
+  clean <- gsub("\\bWillowb(?:an)?k?\\b\\.?", "Willowbank", clean, ignore.case = TRUE, perl = TRUE)
+  # William
+  clean <- gsub("\\bW(?:illia)?m\\b\\.?", "William", clean, ignore.case = TRUE, perl = TRUE)
+  # Windsor
+  clean <- gsub("\\bWin(?:dsor)?\\b\\.?(?:\\s+)?(place|Terrace|Street)?", "Windsor \\1", clean, ignore.case = TRUE, perl = TRUE)
+  # Woodlands
+  clean <- gsub("\\bWoodla(?:nds)?\\b\\.?", "Woodlands", clean, ignore.case = TRUE, perl = TRUE)
+  # Woodside
+  clean <- gsub("\\bWoodsi(?:de)?\\b\\.?", "Woodside", clean, ignore.case = TRUE, perl = TRUE)
   
   clean
 }
@@ -538,27 +608,24 @@ clean_others <- function(address){
   ## (Work)
   # clean <- gsub("(.*)\\s\\(work\\).?", "\\1", clean, ignore.case = TRUE, perl = TRUE)
   
-  # If place not located at the end of the address, append a comma.
-  places <- c(
-    # "Arcade", "Bridge", "Circus", "Close", "Court", "Crescent", "Drive", "Garden", 
-    # "Lane", "Loan", "Place", "Port", "Quay", "Road", "Square", "Street", "Terrace", 
-    # "Wynd"
-    "Arcade", "Bridge", "Circus", "Close", "Court", "Crescent", "Drive", "Garden", 
-    "Lane", "Place", "Port", "Quay", "Road", "Square", "Street", "Terrace", 
-    "Wynd"
-  )
-  clean <- gsub(
-    paste0("\\b(", paste(places, collapse = "|"), ")\\b(?!$|[,-]|\\s+\\(|\\s+street)"), "\\1, ", 
-    clean, ignore.case = TRUE, perl = TRUE
-  )
-  
   # Unwanted processing outcomes
   ## "street" processing sometimes outputs orpheans ", reet,". Replace with comma.
   clean <- gsub(", reet,", ",", clean, ignore.case = TRUE, perl = TRUE)
   
-  
   # If placed between two words, replace period with a comma.
   clean <- gsub("\\b\\.\\s\\b", ", ", clean, ignore.case = TRUE, perl = TRUE
+  )
+  
+  # If place not located at the end of the address, append a comma.
+  clean <- gsub(
+    paste0("\\b(", paste(places, collapse = "|"), ")\\b(?!$|[,-]|\\s+\\(|\\s+street)"), "\\1, ", 
+    clean, ignore.case = TRUE, perl = TRUE
+  )
+  # If place not located at the beginning of the address and separated from previous
+  # word with comma and space delete comma.
+  clean <- gsub(
+    paste0(",\\s+(", paste(places, collapse = "|"), ")"), " \\1", 
+    clean, ignore.case = TRUE, perl = TRUE
   )
   
   clean
