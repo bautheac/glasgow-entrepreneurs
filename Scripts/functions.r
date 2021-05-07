@@ -1,58 +1,107 @@
 
 
+# Globals ####
+
+## Variables ####
 places <- c(
   "Arcade", "Arches", "Bridge", "Circus", "Close", "Court", "Crescent", "Drive",
   "Garden", "Lane", "Loan", "Place", "Port", "Quay", "Road", "Square", "Street",
   "Terrace", "Wynd"
 )
 
+## Functions ####
 
+### Main ####
+
+#### Address ####
 clean_address <- function(raw){
   
   # Pre-clean
-  clean <- pre_clean(raw)
+  clean <- clean_address_pre_clean(raw)
   # Places
-  clean <- clean_places(clean)
+  clean <- clean_address_clean_places(clean)
   # Names
-  clean <- clean_names(clean)
+  clean <- clean_address_clean_names(clean)
   # Post clean
-  clean <- post_clean(clean)
+  clean <- clean_address_post_clean(clean)
   
   clean
 }
 
-pre_clean <- function(address){
+#### Numbers ####
+clean_numbers <- function(address){
+  
+  clean <- gsub("(\\d{3})\\s?(\\d{3})", "\\1, \\2", address, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("(\\d)\\s?[,&]\\s?(\\d)", "\\1, \\2", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("(?<=\\d)\\.5", " 1/2", clean, ignore.case = TRUE, perl = TRUE)
+  clean
+}
+
+#### Forename ####
+clean_forename <- function(name){
+  
+  clean <- clean_forename_separate_words(name)
+  clean <- clean_forename_clean_spelling(clean)
+  
+  clean
+}
+
+### Utils ####
+clean_specials <- function(address){
+  
+  clean <- gsub("»", "", address, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("’", "'", clean, ignore.case = TRUE, perl = TRUE)
+  
+  clean
+}
+
+
+
+
+
+
+
+
+# Helpers ####
+
+## Address ####
+
+### Pre-clean ####
+clean_address_pre_clean <- function(address){
   
   # Special characters
   clean <- clean_specials(address)
   # Clean ends
-  clean <- clean_ends(clean)
+  clean <- clean_address_clean_ends(clean)
   # Separate words
-  clean <- clean_attached_words(clean)
+  clean <- clean_address_clean_attached_words(clean)
   # M' to Mc
-  clean <- clean_mac(clean)
+  clean <- clean_address_clean_mac(clean)
   # Saints
-  clean <- clean_saints(clean)
+  clean <- clean_address_clean_saints(clean)
   # Possessives
-  clean <- clean_possessives(clean)
+  clean <- clean_address_clean_possessives(clean)
   # Suffixes
-  clean <- clean_suffixes(clean)
+  clean <- clean_address_clean_suffixes(clean)
   
   clean
 }
 
-post_clean <- function(address){
+
+### Post-clean ####
+clean_address_post_clean <- function(address){
   
   # Others
-  clean <- clean_others(address)
+  clean <- clean_address_clean_others(address)
   # Clean ends
-  clean <- clean_ends(clean)
+  clean <- clean_address_clean_ends(clean)
   
   clean
 }
 
 
-clean_mac <- function(address){
+### Mac ####
+clean_address_clean_mac <- function(address){
   
   clean <- gsub("M\\s?['c](?=\\w)", "Mac", address, ignore.case = FALSE, perl = TRUE)
   
@@ -60,7 +109,8 @@ clean_mac <- function(address){
 }
 
 
-clean_saints <- function(address){
+### Saints ####
+clean_address_clean_saints <- function(address){
   
   clean <- gsub(
     paste0(
@@ -75,8 +125,8 @@ clean_saints <- function(address){
   clean
 }
 
-
-clean_possessives <- function(address){
+### Possessive ####
+clean_address_clean_possessives <- function(address){
   
   clean <- gsub("\\b(\\w+)\\b\\.?'?s'?", "\\1s", address, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("(\\b\\w+s\\b)'\\.?", "\\1", clean, ignore.case = TRUE, perl = TRUE)
@@ -84,16 +134,8 @@ clean_possessives <- function(address){
   clean
 }
 
-
-clean_specials <- function(address){
-  
-  clean <- gsub("»", "", address, ignore.case = TRUE, perl = TRUE)
-  clean <- gsub("’", "'", clean, ignore.case = TRUE, perl = TRUE)
-  
-  clean
-}
-
-clean_ends <- function(address){
+### Ends ####
+clean_address_clean_ends <- function(address){
   
   # Trim white space(s) at start and end as well as multiple white spaces in a row
   # clean <- stringr::str_squish(address)
@@ -107,7 +149,8 @@ clean_ends <- function(address){
   clean
 }
 
-clean_attached_words <- function(address){
+### Attached words ####
+clean_address_clean_attached_words <- function(address){
   
   # If two words are only separated by a period, replace period with white space
   clean <- gsub(
@@ -117,17 +160,8 @@ clean_attached_words <- function(address){
   clean
 }
 
-clean_numbers <- function(address){
-  
-  clean <- gsub("(\\d{3})\\s?(\\d{3})", "\\1, \\2", address, ignore.case = TRUE, perl = TRUE)
-  clean <- gsub("(\\d)\\s?[,&]\\s?(\\d)", "\\1, \\2", clean, ignore.case = TRUE, perl = TRUE)
-  clean <- gsub("(?<=\\d)\\.5", " 1/2", clean, ignore.case = TRUE, perl = TRUE)
-  clean
-}
-
-
-
-clean_places <- function(address){
+### Places ####
+clean_address_clean_places <- function(address){
   
   # Arcade
   clean <- gsub("\\barc?(?:ea)?(?:ade)?\\b\\.?", "Arcade", address, ignore.case = TRUE, perl = TRUE)
@@ -184,7 +218,8 @@ clean_places <- function(address){
   clean
 }
 
-clean_suffixes <- function(address){
+### Suffixes ####
+clean_address_clean_suffixes <- function(address){
   
   # Cardinals
   ## North
@@ -209,7 +244,8 @@ clean_suffixes <- function(address){
   clean
 }
 
-clean_names <- function(address){
+### Names ####
+clean_address_clean_names <- function(address){
   
   # Abbotsford
   # clean <- gsub("\\bAbbotsf?o?r?d?\\b\\.?(?=\\sP)", "Abbotsford", address, ignore.case = TRUE, perl = TRUE)
@@ -596,9 +632,8 @@ clean_names <- function(address){
   clean
 }
 
-
-
-clean_others <- function(address){
+### Others ####
+clean_address_clean_others <- function(address){
   
   # Get rid of parasite postfixes
   ## (Agents)
@@ -630,3 +665,70 @@ clean_others <- function(address){
   
   clean
 }
+
+## Forename ####
+
+### Separate words ####
+clean_forename_separate_words <- function(name){
+  
+  clean <- gsub("(?<=[a-z.])([A-Z])", " \\1", name, ignore.case = FALSE, perl = TRUE)
+  clean
+}
+
+### Spelling ####
+clean_forename_clean_spelling <- function(name){
+  
+  # Abraham 
+  clean <- gsub("\\bAbr(?:aham)?\\b\\.?", "Abraham", name, ignore.case = TRUE, perl = TRUE)
+  # Alexander
+  clean <- gsub("\\bAle[sx](?:ander)?\\b\\.?", "Alexander", clean, ignore.case = TRUE, perl = TRUE)
+  # Andrew 
+  clean <- gsub("\\bAnd(?:re)?w?\\b\\.?", "Andrew", clean, ignore.case = TRUE, perl = TRUE)
+  # Angus
+  clean <- gsub("\\bAng(?:us)?\\b\\.?", "Angus", clean, ignore.case = TRUE, perl = TRUE)
+  # Archibald
+  clean <- gsub("\\bArch?i?(?:bal)?d?\\b\\.?", "Archibald", clean, ignore.case = TRUE, perl = TRUE)
+  # Benjamin
+  clean <- gsub("\\bBenj(?:amin)?\\b\\.?", "Benjamin", clean, ignore.case = TRUE, perl = TRUE)
+  # Bernard
+  clean <- gsub("\\bBern?(?:ard)?\\b\\.?", "Bernard", clean, ignore.case = TRUE, perl = TRUE)
+  # Daniel 
+  clean <- gsub("\\bDan(?:iel)?\\b\\.?", "Daniel", clean, ignore.case = TRUE, perl = TRUE)
+  # Dominic 
+  clean <- gsub("\\bDom(?:inic)?\\b\\.?", "Dominic", clean, ignore.case = TRUE, perl = TRUE)
+  # Donald
+  clean <- gsub("\\bDon(?:ald)?\\b\\.?", "Donald", clean, ignore.case = TRUE, perl = TRUE)
+  # Charles 
+  clean <- gsub("\\bCha?(?:rle)?s?\\b\\.?", "Charles", clean, ignore.case = TRUE, perl = TRUE)
+  # Edward
+  clean <- gsub("\\bEdw(?:ar)?d?\\b\\.?", "Edward", clean, ignore.case = TRUE, perl = TRUE)
+  # Elizabeth
+  clean <- gsub("\\bEliz(?:abeth)?\\b\\.?", "Elizabeth", clean, ignore.case = TRUE, perl = TRUE)
+  # George
+  clean <- gsub("\\bGeo(?:rge)?\\b\\.?", "George", clean, ignore.case = TRUE, perl = TRUE)
+  # James 
+  clean <- gsub("\\bJa(?:me)?s\\b\\.?", "James", clean, ignore.case = TRUE, perl = TRUE)
+  # John 
+  clean <- gsub("\\bJ(?:[no]h)?(?:no|[no])\\b\\.?", "John", clean, ignore.case = TRUE, perl = TRUE)
+  # Margaret
+  clean <- gsub("\\bMarg(?:are)?t\\b\\.?", "Margaret", clean, ignore.case = TRUE, perl = TRUE)
+  # Matthew
+  clean <- gsub("\\Matt(?:hew)?\\b\\.?", "Matthew", clean, ignore.case = TRUE, perl = TRUE)
+  # Norman
+  clean <- gsub("\\Norm(?:an)?\\b\\.?", "Norman", clean, ignore.case = TRUE, perl = TRUE)
+  # Richard
+  clean <- gsub("\\bRich(?:ard)?\\b\\.?", "Richard", clean, ignore.case = TRUE, perl = TRUE)
+  # Robert
+  clean <- gsub("\\bR(?:ob)?(?:er)?[ot]\\b\\.?", "Robert", clean, ignore.case = TRUE, perl = TRUE)
+  # Samuel
+  clean <- gsub("\\bSam(?:uel)?\\b\\.?", "Samuel", clean, ignore.case = TRUE, perl = TRUE)
+  # Thomas
+  clean <- gsub("\\bTho(?:ma)?s\\b\\.?", "Thomas", clean, ignore.case = TRUE, perl = TRUE)
+  # William
+  clean <- gsub("\\bW(?:illia)?m\\b\\.?", "William", clean, ignore.case = TRUE, perl = TRUE)
+  
+  clean
+}
+
+
+

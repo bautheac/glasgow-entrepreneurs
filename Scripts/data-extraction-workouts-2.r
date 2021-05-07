@@ -57,7 +57,7 @@ split_entries <- paste0(
 # )
 
 
-front_raw <- purrr::pmap_df(dplyr::filter(directories, section == "persons"), function(...){
+general_directory_raw <- purrr::pmap_df(dplyr::filter(directories, section == "persons"), function(...){
   # browser()
   args <- rlang::list2(...)
   path <- args$url; pages <- seq(args$start, args$end)
@@ -92,8 +92,8 @@ front_raw <- purrr::pmap_df(dplyr::filter(directories, section == "persons"), fu
 
 
 
-front_clean <- dplyr::mutate(
-  front_raw,
+general_directory_clean <- dplyr::mutate(
+  general_directory_raw,
   record = gsub("([[:punct:]])\\1", "\\1 ", record, perl = TRUE),
   record = gsub("„", ", ", record, perl = TRUE),
   record = gsub("(?<=\\w)([[:punct:]])(?=\\w)", "\\1 ", record, perl = TRUE),
@@ -119,7 +119,7 @@ front_clean <- dplyr::mutate(
 )
   
 openxlsx::write.xlsx(
-  persons_clean, 
+  general_directory_clean, 
   here::here("Data", "Trade-directories.xlsx"), 
   sheetName = "persons",
   append = TRUE
@@ -129,7 +129,7 @@ openxlsx::write.xlsx(
 
 # Back of the book
 
-back_raw <- openxlsx::read.xlsx(
+trades_directory_raw <- openxlsx::read.xlsx(
   here::here("Data", "4 - 1861-1862 Glasgow Trade Directory Editing file with Residential.xlsx")
 ) %>% 
   tibble::as_tibble() %>% 
@@ -146,7 +146,7 @@ back_raw <- openxlsx::read.xlsx(
   dplyr::arrange(address.trade.street, address.trade.number)
 
 test <- dplyr::filter(
-  back_raw,
+  trades_directory_raw,
   # stringr::str_detect(address.trade.street, "(?i)Avondale")
   stringr::str_detect(surname, "Ross"),
   stringr::str_detect(forename, "A.")
@@ -154,7 +154,7 @@ test <- dplyr::filter(
 # file_path <- here::here("Data", "Trade-directories-sample.xlsx")
 # openxlsx::write.xlsx(
 #   dplyr::filter(
-#     back_raw, 
+#     trades_directory_raw, 
 #     stringr::str_detect(address.trade.street, "^[AB]")
 #   ), 
 #   file_path, 
@@ -162,17 +162,19 @@ test <- dplyr::filter(
 #   append = TRUE
 # )
 
-back_clean <- dplyr::mutate(
-  back_raw,
+trades_directory_clean <- dplyr::mutate(
+  trades_directory_raw,
   profession = gsub("(.*)\\(see.*", "\\1", profession, ignore.case = TRUE, perl = TRUE),
-  address.trade.street = clean_address(address.trade.street),
-  address.trade.number = clean_numbers(address.trade.number)
+  forename = clean_forename(forename)
+  # address.trade.street = clean_address(address.trade.street),
+  # address.trade.number = clean_numbers(address.trade.number)
 ) %>%
-  dplyr::arrange(address.trade.street, address.trade.number)
+  # dplyr::arrange(address.trade.street, address.trade.number)
+  dplyr::arrange(forename)
 
 
 test <- dplyr::filter(
-  back_clean,
+  trades_directory_clean,
   # stringr::str_detect(address.trade.street, "(?i)Port")
   # stringr::str_detect(address.trade.street, "Saint And.*")
   stringr::str_detect(surname, "Warden"),
@@ -187,7 +189,7 @@ openxlsx::writeData(
   wb, 
   "professions-clean", 
   dplyr::filter(
-    back_clean, 
+    trades_directory_clean, 
     stringr::str_detect(address.trade.street, "^[AB]")
   )
 )
