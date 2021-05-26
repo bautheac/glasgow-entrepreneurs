@@ -47,12 +47,29 @@ forename <- function(name){
   clean
 }
 
-## Utils ####
-specials <- function(address){
+### Surname ####
+surname <- function(name){
   
-  clean <- gsub("»", "", address, ignore.case = TRUE, perl = TRUE)
+  clean <- surname_clean_mac(name)
+  clean <- parentheses(clean)
+  clean <- surname_clean_spelling(clean)
+  clean <- surname_punctutation(clean)
+  
+  clean
+}
+
+## Utils ####
+specials <- function(x){
+  
+  clean <- gsub("»", "", x, ignore.case = TRUE, perl = TRUE)
   clean <- gsub("’", "'", clean, ignore.case = TRUE, perl = TRUE)
   
+  clean
+}
+
+parentheses <- function(x){
+  
+  clean <-gsub("(.*)\\(.*", "\\1", x, ignore.case = TRUE, perl = TRUE)
   clean
 }
 
@@ -674,7 +691,8 @@ forename_separate_words <- function(name){
   
   clean <- gsub("(?<=[a-z.])([A-Z])", " \\1", name, ignore.case = FALSE, perl = TRUE)
   clean <- gsub("([A-Z])([A-Z])", "\\1. \\2 ", clean, ignore.case = FALSE, perl = TRUE)
-  clean <- gsub("([A-Z])&([A-Z])", "\\1 & \\2 ", clean, ignore.case = FALSE, perl = TRUE)
+  clean <- gsub("([A-Za-z])&([A-Z])", "\\1 & \\2", clean, ignore.case = FALSE, perl = TRUE)
+  clean <- gsub("([A-Z])\\.([A-Z]+\\b)", "\\1\\. \\2", clean, ignore.case = TRUE, perl = TRUE)
   clean
 }
 
@@ -752,25 +770,320 @@ forename_clean_spelling <- function(name){
   # Hugh 
   clean <- gsub("\\bHu(?:gh)?\\b\\.?", "Hugh", clean, ignore.case = TRUE, perl = TRUE)
   # James 
-  clean <- gsub("\\bJa(?:me)?s\\b\\.?", "James", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bJa?(?:me)?s\\b\\.?", "James", clean, ignore.case = TRUE, perl = TRUE)
   # John 
-  clean <- gsub("\\bJ(?:[no]h)?(?:no|[no])\\b\\.?", "John", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bJ(?:[no]h)?(?:no|[nou])\\b\\.?", "John", clean, ignore.case = TRUE, perl = TRUE)
+  # Joseph
+  clean <- gsub("\\bJos(?:eph)?\\b\\.?", "Joseph", clean, ignore.case = TRUE, perl = TRUE)
+  # Joshua
+  clean <- gsub("\\bJosh(?:ua)?\\b\\.?", "Joshua", clean, ignore.case = TRUE, perl = TRUE)
+  # Kenneth
+  clean <- gsub("\\bKen(neth)?\\b(?(1)|\\.)", "Kenneth", clean, ignore.case = TRUE, perl = TRUE)
+  # Lawrence
+  clean <- gsub("\\bLawr(?:ence)?\\b\\.?", "Lawrence", clean, ignore.case = TRUE, perl = TRUE)
+  # Malcolm 
+  clean <- gsub("\\Malc?(?:om)?\\b\\.?", "Malcolm", clean, ignore.case = TRUE, perl = TRUE)
   # Margaret
-  clean <- gsub("\\bMarg(?:are)?t\\b\\.?", "Margaret", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bMarg(?:are)?t?\\b\\.?", "Margaret", clean, ignore.case = TRUE, perl = TRUE)
+  # Mathew
+  clean <- gsub("\\bMat(hew)?\\b(?(1)|\\.)", "Mathew", clean, ignore.case = TRUE, perl = TRUE)
   # Matthew
   clean <- gsub("\\bMatt(?:hew)?\\b\\.?", "Matthew", clean, ignore.case = TRUE, perl = TRUE)
+  # Michael
+  clean <- gsub("\\bMich(?:ael)?\\b\\.?", "Michael", clean, ignore.case = TRUE, perl = TRUE)
+  # Miss
+  clean <- gsub("\\bMiss?\\b\\.?", "Miss", clean, ignore.case = TRUE, perl = TRUE)
   # Norman
-  clean <- gsub("\\bNorm(?:an)?\\b\\.?", "Norman", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bNorm?(?:an)?\\b\\.?", "Norman", clean, ignore.case = TRUE, perl = TRUE)
+  # Patrick
+  clean <- gsub("\\bPat(?:ric)?k\\b\\.?", "Patrick", clean, ignore.case = TRUE, perl = TRUE)
+  # Peter 
+  clean <- gsub("\\bPet(?:er)?\\b\\.?", "Peter", clean, ignore.case = TRUE, perl = TRUE)
   # Richard
-  clean <- gsub("\\bRich(?:ard)?\\b\\.?", "Richard", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bRich(?:ar)?d?\\b\\.?", "Richard", clean, ignore.case = TRUE, perl = TRUE)
   # Robert
-  clean <- gsub("\\bR(?:ob)?(?:er)?[ot]\\b\\.?", "Robert", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bR(?:ob)?(?:er)?[ot]b?\\b\\.?", "Robert", clean, ignore.case = TRUE, perl = TRUE)
+  # Ronald
+  clean <- gsub("\\bRon(?:ald)?\\b\\.?", "Ronald", clean, ignore.case = TRUE, perl = TRUE)
   # Samuel
-  clean <- gsub("\\bSam(?:uel)?\\b\\.?", "Samuel", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bSam(?:ue)?l?\\b\\.?", "Samuel", clean, ignore.case = TRUE, perl = TRUE)
   # Thomas
-  clean <- gsub("\\bTho(?:ma)?s\\b\\.?", "Thomas", clean, ignore.case = TRUE, perl = TRUE)
+  clean <- gsub("\\bTho(?:ma)?s?\\b\\.?", "Thomas", clean, ignore.case = TRUE, perl = TRUE)
   # William
   clean <- gsub("\\bW(?:illia)?m\\b\\.?", "William", clean, ignore.case = TRUE, perl = TRUE)
+  # Walter
+  clean <- gsub("\\bW(?:alte)?r\\b\\.?", "Walter", clean, ignore.case = TRUE, perl = TRUE)
+  
+  clean
+}
+
+### Surname ####
+
+#### Mac ####
+surname_clean_mac <- function(address){
+  
+  clean <- gsub("\\bMa?c(\\w{2,}\\b)", "Mac \\1", address, ignore.case = TRUE, perl = TRUE)
+  
+  clean
+}
+
+surname_punctutation <- function(name){
+  
+  clean <- gsub("\\*", "", name, ignore.case = TRUE, perl = TRUE)
+  
+  clean
+}
+
+#### Spelling ####
+surname_clean_spelling <- function(name){
+  
+  # Abbott 
+  clean <- gsub("\\bAbbott?\\b\\.?", "Abbott", name, ignore.case = TRUE, perl = TRUE)
+  # Abemethy
+  clean <- gsub("\\bAbe(?:m|rn)ethy\\b\\.?", "Abernethy", clean, ignore.case = TRUE, perl = TRUE)
+  # Addie
+  clean <- gsub("\\bAdd?ie\\b\\.?", "Addie", clean, ignore.case = TRUE, perl = TRUE)
+  # Aitchison
+  clean <- gsub("\\bAitch[ei]son\\b\\.?", "Aitchison", clean, ignore.case = TRUE, perl = TRUE)
+  # Aitken
+  clean <- gsub("\\bAitk[ei]n\\b\\.?", "Aitken", clean, ignore.case = TRUE, perl = TRUE)
+  # Baillie
+  clean <- gsub("\\bBail?lie\\b\\.?", "Baillie", clean, ignore.case = TRUE, perl = TRUE)
+  # Bealle
+  clean <- gsub("\\bBeale?\\b\\.?", "Bealle", clean, ignore.case = TRUE, perl = TRUE)
+  # Blackie
+  clean <- gsub("\\bBla[ce]kie\\b\\.?", "Blackie", clean, ignore.case = TRUE, perl = TRUE)
+  # Blyth
+  clean <- gsub("\\bBlythe?\\b\\.?", "Blyth", clean, ignore.case = TRUE, perl = TRUE)
+  # Cannan
+  clean <- gsub("\\bCann[ao]n\\b\\.?", "Cannan", clean, ignore.case = TRUE, perl = TRUE)
+  # Connell
+  clean <- gsub("\\bConnell?\\b\\.?", "Connell", clean, ignore.case = TRUE, perl = TRUE)
+  # Dennison
+  clean <- gsub("\\bDenn?ison\\b\\.?", "Dennison", clean, ignore.case = TRUE, perl = TRUE)
+  # Dunnet
+  clean <- gsub("\\bDunnett?\\b\\.?", "Dunnett", clean, ignore.case = TRUE, perl = TRUE)
+  # Easton
+  clean <- gsub("\\bEast[co]n\\b\\.?", "Easton", clean, ignore.case = TRUE, perl = TRUE)
+  # Edmon
+  clean <- gsub("\\bEdm[ou]n", "Edmon", clean, ignore.case = TRUE, perl = TRUE)
+  # Finnerty
+  clean <- gsub("\\bFinn[ae]rty\\b\\.?", "Finnerty", clean, ignore.case = TRUE, perl = TRUE)
+  # Fiskin
+  clean <- gsub("\\bFisk[ei]n\\b\\.?", "Fiskin", clean, ignore.case = TRUE, perl = TRUE)
+  # Gemmell
+  clean <- gsub("\\bGemm[ei]ll\\b\\.?", "Gemmell", clean, ignore.case = TRUE, perl = TRUE)
+  # Hilliard
+  clean <- gsub("\\bHilli?ard\\b\\.?", "Hilliard", clean, ignore.case = TRUE, perl = TRUE)
+  # Hinshelwood
+  clean <- gsub("\\bHin[cs]helwood\\b\\.?", "Hinshelwood", clean, ignore.case = TRUE, perl = TRUE)
+  # Imrie
+  clean <- gsub("\\bI(?:m|rn)rie\\b\\.?", "Imrie", clean, ignore.case = TRUE, perl = TRUE)
+  # Junior
+  clean <- gsub("\\b,?\\s+\\bjun(?:io)?r?\\b\\.?", " Junior", clean, ignore.case = TRUE, perl = TRUE)
+  # Kinninmont
+  clean <- gsub("\\bKin[nu]inmont\\b\\.?", "Kinninmont", clean, ignore.case = TRUE, perl = TRUE)
+  # Lochhead
+  clean <- gsub("\\bLochh?ead\\b\\.?", "Lochhead", clean, ignore.case = TRUE, perl = TRUE)
+  # Loudon 
+  clean <- gsub("\\bLoudou?n\\b\\.?", "Loudon", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Ainsh
+  clean <- gsub("\\bMac\\sAins(?:h|li)\\b\\.?", "Mac Ainsh", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Aulay
+  clean <- gsub("\\bMac\\sAul[ae]y\\b\\.?", "Mac Aulay", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Auslan
+  clean <- gsub("\\bMac\\sAu?slan\\b\\.?", "Mac Auslan", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Bride
+  clean <- gsub("\\bMac\\sBr[iy]de\\b\\.?", "Mac Bride", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Cleuchan
+  clean <- gsub("\\bMac\\sCl[ae]uchan\\b\\.?", "Mac Cleuchan", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Clement
+  clean <- gsub("\\bMac\\sClem[eo]nt\\b\\.?", "Mac Clement", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Clusky
+  clean <- gsub("\\bMac\\sCluske?y\\b\\.?", "Mac Clusky", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Connochie
+  clean <- gsub("\\bMac\\sConn?[aeo][cg]h(?:ie|y)\\b\\.?", "Mac Connochie", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Cormick
+  clean <- gsub("\\bMac\\sCorm?[ai]ck\\b\\.?", "Mac Cormick", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Creadie
+  clean <- gsub("\\bMac\\sCrea?dd?(?:ie|y)\\b\\.?", "Mac Creadie", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Crindell
+  clean <- gsub("\\bMac\\sCrind[el][el]l?\\b\\.?", "Mac Crindell", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Dowall
+  clean <- gsub("\\bMac\\sDow[ae]ll\\b\\.?", "Mac Dowall", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Ewan
+  clean <- gsub("\\bMac\\sEw[ae]n\\b\\.?", "Mac Ewan", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Fadyen
+  clean <- gsub("\\bMac\\sFad[yz][ae]?[ae]?n\\b\\.?", "Mac Fadyen", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Fedries
+  clean <- gsub("\\bMac\\sFedrie?s\\b\\.?", "Mac Fedries", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Garrey
+  clean <- gsub("\\bMac\\sGarre?y\\b\\.?", "Mac Garrey", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Gie
+  clean <- gsub("\\bMac\\sGh?ie\\b\\.?", "Mac Gie", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Glashan
+  clean <- gsub("\\bMac\\sGlash[ae]n\\b\\.?", "Mac Glashan", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Graddie
+  clean <- gsub("\\bMac\\sGradd?(?:ie|y)\\b\\.?", "Mac Graddie", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Innis
+  clean <- gsub("\\bMac\\sInn[ei]s\\b\\.?", "Mac Innis", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Iver
+  clean <- gsub("\\bMac\\s[il]v[eo]r\b\\.?", "Mac Iver", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Kinly
+  clean <- gsub("\\bMac\\sKind?l[ae]y\\b\\.?", "Mac Innis", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Kirdy
+  clean <- gsub("\\bMac\\sKird(?:ie|y)\\b\\.?", "Mac Kirdy", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Lachlan
+  clean <- gsub("\\bMac\\sLau?[cg]hl[ai]n\\b\\.?", "Mac Lachlan", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Laren
+  clean <- gsub("\\bMac\\sLau?r[ei]n\\b\\.?", "Mac Laren", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Millan
+  clean <- gsub("\\bMac\\sMill[ea]n\\b\\.?", "Mac Millan", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Naughton
+  clean <- gsub("\\bMac\\sNaught[aeo]n\\b\\.?", "Mac Naughton", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Neill
+  clean <- gsub("\\bMac\\sNeill?\\b\\.?", "Mac Neill", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Nie
+  clean <- gsub("\\bMac\\sN[ei]e\\b\\.?", "Mac Nie", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Parlane
+  clean <- gsub("\\bMac\\sParl[ea]ne?\\b\\.?", "Mac Parlane", clean, ignore.case = TRUE, perl = TRUE)
+  # Mac Symon
+  clean <- gsub("\\bMac\\sSymond?\\b\\.?", "Mac Symon", clean, ignore.case = TRUE, perl = TRUE)
+  # Main
+  clean <- gsub("\\bMains?\\b\\.?", "Mac Main", clean, ignore.case = TRUE, perl = TRUE)
+  # Meighan
+  clean <- gsub("\\bMeigh[ae]n\\b\\.?", "Meighan", clean, ignore.case = TRUE, perl = TRUE)
+  # Meikleham
+  clean <- gsub("\\bMeikle?h?am\\b\\.?", "Meikleham", clean, ignore.case = TRUE, perl = TRUE)
+  # Millar
+  clean <- gsub("\\bMill[ae]r\\b\\.?", "Millar", clean, ignore.case = TRUE, perl = TRUE)
+  # Milligan
+  clean <- gsub("\\bMillig[ae]n\\b\\.?", "Milligan", clean, ignore.case = TRUE, perl = TRUE)
+  # Monie
+  clean <- gsub("\\bMon(?:ie|y)\\b\\.?", "Monie", clean, ignore.case = TRUE, perl = TRUE)
+  # Montague
+  clean <- gsub("\\bMontague?\\b\\.?", "Montague", clean, ignore.case = TRUE, perl = TRUE)
+  # Montgomery
+  clean <- gsub("\\bMontgomer(?:ie|y)\\b\\.?", "Montgomery", clean, ignore.case = TRUE, perl = TRUE)
+  # Moodie
+  clean <- gsub("\\bMood(?:ie|y)\\b\\.?", "Moodie", clean, ignore.case = TRUE, perl = TRUE)
+  # Mullen
+  clean <- gsub("\\bMull[ei]n\\b\\.?", "Mullen", clean, ignore.case = TRUE, perl = TRUE)
+  # Mushet
+  clean <- gsub("\\bMus(?:li|h)et\\b\\.?", "Mushet", clean, ignore.case = TRUE, perl = TRUE)
+  # Neil
+  clean <- gsub("\\bNeill?\\b\\.?", "Neil", clean, ignore.case = TRUE, perl = TRUE)
+  # Neilson
+  clean <- gsub("\\bNei?lson?\\b\\.?", "Neilson", clean, ignore.case = TRUE, perl = TRUE)
+  # Nichol
+  clean <- gsub("\\bNich?ol\\b\\.?", "Nichol", clean, ignore.case = TRUE, perl = TRUE)
+  # Nisbet
+  clean <- gsub("\\bNisbett?\\b\\.?", "Nichol", clean, ignore.case = TRUE, perl = TRUE)
+  # Notman
+  clean <- gsub("\\bNotma(?:ri|n)\\b\\.?", "Nichol", clean, ignore.case = TRUE, perl = TRUE)
+  # O'Neill
+  clean <- gsub("\\bO'Neill?\\b\\.?", "O'Neill", clean, ignore.case = TRUE, perl = TRUE)
+  # Oatt
+  clean <- gsub("\\bOas?tt?\\b\\.?", "Oatt", clean, ignore.case = TRUE, perl = TRUE)
+  # Ogilvie
+  clean <- gsub("\\bOgilv(?:ie|y)\\b\\.?", "Ogilvie", clean, ignore.case = TRUE, perl = TRUE)
+  # Owens
+  clean <- gsub("\\bOwens?\\b\\.?", "Owens", clean, ignore.case = TRUE, perl = TRUE)
+  # Patterson
+  clean <- gsub("\\bPatt?erson\\b\\.?", "Patterson", clean, ignore.case = TRUE, perl = TRUE)
+  # Pattison
+  clean <- gsub("\\bPattie?son\\b\\.?", "Pattison", clean, ignore.case = TRUE, perl = TRUE)
+  # Penney
+  clean <- gsub("\\bPenne?y\\b\\.?", "Penney", clean, ignore.case = TRUE, perl = TRUE)
+  # Pennycook
+  clean <- gsub("\\bPennyc[ou][oi]c?k\\b\\.?", "Pennycook", clean, ignore.case = TRUE, perl = TRUE)
+  # Perrie
+  clean <- gsub("\\bPerr(?:ie|y)\\b\\.?", "Pennycook", clean, ignore.case = TRUE, perl = TRUE)
+  # Phillips
+  clean <- gsub("\\bPhillips?\\b\\.?", "Phillips", clean, ignore.case = TRUE, perl = TRUE)
+  # Philps
+  clean <- gsub("\\bPhilps?\\b\\.?", "Philps", clean, ignore.case = TRUE, perl = TRUE)
+  # Pigott
+  clean <- gsub("\\bPigott?\\b\\.?", "Pigott", clean, ignore.case = TRUE, perl = TRUE)
+  # Pollock
+  clean <- gsub("\\bPolloc?k\\b\\.?", "Pigott", clean, ignore.case = TRUE, perl = TRUE)
+  # Priestley
+  clean <- gsub("\\bPriestle?y\\b\\.?", "Pigott", clean, ignore.case = TRUE, perl = TRUE)
+  # Rankine
+  clean <- gsub("\\bRankine?\\b\\.?", "Rankine", clean, ignore.case = TRUE, perl = TRUE)
+  # Richard
+  clean <- gsub("\\bRichards?\\b\\.?", "Richard", clean, ignore.case = TRUE, perl = TRUE)
+  # Roddan
+  clean <- gsub("\\bRodd[ea]n\\b\\.?", "Roddan", clean, ignore.case = TRUE, perl = TRUE)
+  # Rodger
+  clean <- gsub("\\bRod?gers?\\b\\.?", "Rodger", clean, ignore.case = TRUE, perl = TRUE)
+  # Rowand
+  clean <- gsub("\\bRowand?\\b\\.?", "Rowand", clean, ignore.case = TRUE, perl = TRUE)
+  # Salmond
+  clean <- gsub("\\bSalmond?\\b\\.?", "Salmond", clean, ignore.case = TRUE, perl = TRUE)
+  # Senior
+  clean <- gsub("\\b,?\\s+\\bsen(?:ior)?\\b\\.?", " Senior", clean, ignore.case = TRUE, perl = TRUE)
+  # Scouller
+  clean <- gsub("\\bScoul?l[ae]r\\b\\.?", "Scouller", clean, ignore.case = TRUE, perl = TRUE)
+  # Seligmann
+  clean <- gsub("\\bSeligmann?\\b\\.?", "Seligmann", clean, ignore.case = TRUE, perl = TRUE)
+  # Sellars
+  clean <- gsub("\\bSell?[ae]rs?\\b\\.?", "Sellars", clean, ignore.case = TRUE, perl = TRUE)
+  # Sheriff
+  clean <- gsub("\\bSheriffs?\\b\\.?", "Sheriff", clean, ignore.case = TRUE, perl = TRUE)
+  # Shields
+  clean <- gsub("\\bShield?s\\b\\.?", "Shields", clean, ignore.case = TRUE, perl = TRUE)
+  # Sillers
+  clean <- gsub("\\bSill[ea]rs\\b\\.?", "Sillers", clean, ignore.case = TRUE, perl = TRUE)
+  # Sim
+  clean <- gsub("\\bSimm?\\b\\.?", "Sim", clean, ignore.case = TRUE, perl = TRUE)
+  # Simpson
+  clean <- gsub("\\bSimp?son\\b\\.?", "Simpson", clean, ignore.case = TRUE, perl = TRUE)
+  # Slimon
+  clean <- gsub("\\bSlim[ao]n\\b\\.?", "Slimon", clean, ignore.case = TRUE, perl = TRUE)
+  # Smellie
+  clean <- gsub("\\bSm[ei]llie\\b\\.?", "Smellie", clean, ignore.case = TRUE, perl = TRUE)
+  # Smith
+  clean <- gsub("\\bSm[iy]th\\b\\.?", "Smith", clean, ignore.case = TRUE, perl = TRUE)
+  # Sneddon
+  clean <- gsub("\\bSnedd[eo]n\\b\\.?", "Sneddon", clean, ignore.case = TRUE, perl = TRUE)
+  # Sommerville
+  clean <- gsub("\\bSommLerva?ill?e?\\b\\.?", "Sommerville", clean, ignore.case = TRUE, perl = TRUE)
+  # Spence
+  clean <- gsub("\\bSpencer?\\b\\.?", "Spence", clean, ignore.case = TRUE, perl = TRUE)
+  # Steel
+  clean <- gsub("\\bSteele?\\b\\.?", "Steel", clean, ignore.case = TRUE, perl = TRUE)
+  # Stephen
+  clean <- gsub("\\bStephens?\\b\\.?", "Stephen", clean, ignore.case = TRUE, perl = TRUE)
+  # Stratton
+  clean <- gsub("\\bStratt?on\\b\\.?", "Stratton", clean, ignore.case = TRUE, perl = TRUE)
+  # Struthers
+  clean <- gsub("\\bStruthe[rt]s\\b\\.?", "Struthers", clean, ignore.case = TRUE, perl = TRUE)
+  # Swan
+  clean <- gsub("\\bSwann?\\b\\.?", "Swan", clean, ignore.case = TRUE, perl = TRUE)
+  # Taylor
+  clean <- gsub("\\bTa[iy]lor\\b\\.?", "Taylor", clean, ignore.case = TRUE, perl = TRUE)
+  # Tennent
+  clean <- gsub("\\bTenn[ae]nt\\b\\.?", "Tennent", clean, ignore.case = TRUE, perl = TRUE)
+  # Thompson
+  clean <- gsub("\\bThomp?son\\b\\.?", "Thompson", clean, ignore.case = TRUE, perl = TRUE)
+  # Thyne
+  clean <- gsub("\\bThynn?e\\b\\.?", "Thyne", clean, ignore.case = TRUE, perl = TRUE)
+  # Tod
+  clean <- gsub("\\bTodd?\\b\\.?", "Tod", clean, ignore.case = TRUE, perl = TRUE)
+  # Toner
+  clean <- gsub("\\bTon[ae]r\\b\\.?", "Toner", clean, ignore.case = TRUE, perl = TRUE)
+  # Toshach
+  clean <- gsub("\\bTosha[co]h\\b\\.?", "Toshach", clean, ignore.case = TRUE, perl = TRUE)
+  # Towart
+  clean <- gsub("\\bTow[ae]rt\\b\\.?", "Towart", clean, ignore.case = TRUE, perl = TRUE)
+  # Walsh
+  clean <- gsub("\\bWalshe?\\b\\.?", "Walsh", clean, ignore.case = TRUE, perl = TRUE)
+  # Wylde
+  clean <- gsub("\\bWylde?\\b\\.?", "Wylde", clean, ignore.case = TRUE, perl = TRUE)
+  # Yuill
+  clean <- gsub("\\bYuille?\\b\\.?", "Yuill", clean, ignore.case = TRUE, perl = TRUE)
+  
   
   clean
 }
