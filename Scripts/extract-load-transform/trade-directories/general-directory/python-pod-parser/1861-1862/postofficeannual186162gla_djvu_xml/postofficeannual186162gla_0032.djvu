@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OBJECT>
+  <PARAM name="PAGE" value="postofficeannal186162gla_0032.xml"/>
+  <LINE>ALMANAC AND TIDE TABLE.</LINE>
+  <LINE>EXEMPLIFICATION AND CONSTRUCTION OF THE FOLLOWING TABLES.</LINE>
+  <LINE>TO FIND THE TIME OF HIGH "WATER AT ANY PLACE IN THE GENERAL TIDE TABLE.</LINE>
+  <LINE>Rule. — To the time of high water at Glasgow on the given day, add or subtract the correction for this</LINE>
+  <LINE>required place as stated in the table, and the time of high water will be obtained. When the sum of the</LINE>
+  <LINE>correction, and of the time of high water in the table exceeds 12 hours, subtract 12 hours, and the remainder</LINE>
+  <LINE>will be the time of high water in the morning or evening of the given day, as the column denotes ; when</LINE>
+  <LINE>the sum of the former quantities is less than 12 hours, this sum will be the time of high water required in</LINE>
+  <LINE>the evening of the preceding day, or the morning of the given day, according as the column is marked</LINE>
+  <LINE>morning or evening. Or the morning and the evening tides may be found thus : — If the morning tide be</LINE>
+  <LINE>sought, and the sum be above 12 hoars, take the time from Glasgow for the preceding evening, to which</LINE>
+  <LINE>add the correction for the required place ; from the sum subtract 12 hours, and the remainder is the morning</LINE>
+  <LINE>tide at the place required. If the evening tide is wanted, and the sum exceed 12 hours, take the Glasgow</LINE>
+  <LINE>morning tide for the given day, to which appty the correction for the required place, from the sum subtract</LINE>
+  <LINE>12 hours, and the remainder is the evening tide at the place required.</LINE>
+  <LINE>Required the time of high water at Peterhead, .May 6, 1862.</LINE>
+  <LINE>High water at Glasgow, May 6, 1862, 6h. 14m. p.m.</LINE>
+  <LINE>Correction for Peterhead, 1 3</LINE>
+  <LINE>High water at Peterhead, 5 11</LINE>
+  <LINE>Required the time of high water at London Bridge, January 4, 1862.</LINE>
+  <LINE>High water at Glasgow, January 4, 1862, 4h. m. a.m.</LINE>
+  <LINE>Correction fur London Bridge, -|- 30</LINE>
+  <LINE>High water at London Bridge, 4 30</LINE>
+  <LINE>Required the time of high water at Belfast, March 11, 1862.</LINE>
+  <LINE>High water at Glasgow, March 10, 1862, 8 h. 55 m. p.m.</LINE>
+  <LINE>Correction for Belfast, 9 6</LINE>
+  <LINE>18</LINE>
+  <LINE>12</LINE>
+  <LINE>High water at Belfast, March 11, 1862, 6 1 a.m.</LINE>
+  <LINE>May 16, 1862, the sun's longitude at noon is 55° 19', and the obliquity of the ecliptic is 23° 27' 24'';</LINE>
+  <LINE>required the sun's declination at noon.</LINE>
+  <LINE>To the log. sine of the sun'3 longitude at noon, 55° 19', 9 - 915035</LINE>
+  <LINE>Add the log. sine of the obliquity of ecliptic, 23° 27' 24", 9-599943</LINE>
+  <LINE>Is the sine of the sun's declination, 19° 6' 23", 9-514978</LINE>
+  <LINE>Required the time of the sun's rising and setting at Glasgow, May 10, in latitude 55° 52', and longituda</LINE>
+  <LINE>4° 16' west.</LINE>
+  <LINE>The approximate time of the rising and setting, May 10, 1862.</LINE>
+  <LINE>Rising, 4h. 8m. Setting, 7h. 52m,</LINE>
+  <LINE>Longitude in time, + 17 + 17</LINE>
+  <LINE>4 25 8 9</LINE>
+  <LINE>The sun's declination reduced to these times 17° 32' and 17° 43', and the polar distances are 72° 28' and</LINE>
+  <LINE>72° 17'. The horizontal refraction, less the sun's parallax is 33' — 9" =. 52' 51". Heuce the following</LINE>
+  <LINE>computation : —</LINE>
+  <LINE>Zenith distance,.</LINE>
+  <LINE>Polar distance, 72</LINE>
+  <LINE>90°</LINE>
+  <LINE>72</LINE>
+  <LINE>34</LINE>
+  <LINE>33'</LINE>
+  <LINE>28</LINE>
+  <LINE>08</LINE>
+  <LINE>co-</LINE>
+  <LINE>co-</LINE>
+  <LINE>s.</LINE>
+  <LINE/>
+  <LINE>secant 0-020660</LINE>
+  <LINE>secant 0-250994</LINE>
+  <LINE>sine 9-965117</LINE>
+  <LINE>sine 9-144901</LINE>
+  <LINE>90°</LINE>
+  <LINE>72</LINE>
+  <LINE>34</LINE>
+  <LINE>33'</LINE>
+  <LINE>17</LINE>
+  <LINE>08</LINE>
+  <LINE>co-secant 0021102</LINE>
+  <LINE>co-secant 0-250994</LINE>
+  <LINE>197</LINE>
+  <LINE>98</LINE>
+  <LINE>8</LINE>
+  <LINE>9</LINE>
+  <LINE>34£</LINE>
+  <LINE>n</LINE>
+  <LINE>II. M.</LINE>
+  <LINE>2 2</LINE>
+  <LINE>2</LINE>
+  <LINE>196</LINE>
+  <LINE>98</LINE>
+  <LINE>7</LINE>
+  <LINE>58</LINE>
+  <LINE>29</LINE>
+  <LINE>56</LINE>
+  <LINE>sine 9-995222</LINE>
+  <LINE>sine 9-139944</LINE>
+  <LINE>2)19-411622</LINE>
+  <LINE>sine 9-705811</LINE>
+  <LINE>2)19 407262</LINE>
+  <LINE>co-sine 9-703631</LINE>
+  <LINE>H. M. 8.</LINE>
+  <LINE>3 58 34</LINE>
+  <LINE>2</LINE>
+  <LINE>Equation of time,</LINE>
+  <LINE/>
+  <LINE>46</LINE>
+  <LINE>Time of Rising 4 14</LINE>
+  <LINE>7 57 8</LINE>
+  <LINE>Equation of time 3 48</LINE>
+  <LINE>Time of Setting 7 53 20</LINE>
+  <LINE>JAMES YUILLE,</LINE>
+  <LINE>Teache- of Mathematics, Navigation, and Nautical Astronomy.</LINE>
+</OBJECT>
