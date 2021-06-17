@@ -1,4 +1,16 @@
-library(magrittr); library(here); library(tidyverse)
+library(magrittr); library(here); library(tidyverse); library(modules)
+
+# Load modules ####
+globals <- use(
+  here(
+    "Scripts", "extract-load-transform", "trade-directories", "modules", "globals.r"
+  )
+)
+filter <- use(
+  here(
+    "Scripts", "extract-load-transform", "trade-directories", "modules", "filter.r"
+  )
+)
 
 # Using parsed data from python2 pod parser
 path <- here("Scripts", "extract-load-transform", "trade-directories", "general-directory", "python-pod-parser")
@@ -50,55 +62,78 @@ general_directory_raw <- read_rds(path)
 
 
 ## Filter out ####
-ampersand <- c("&", "<%", "[<]?\\$[•]?", "§","4[']?", "[<6it]?f[ey]?", "[<cit]?j[-'j]?", "[<]?y")
-stop_places <- c(
-  "Academy", "Alliance", "Assembly", "Associations?", "Assurance", "Asylum", "Bank", 
-  "Baths?", "Board", "Bowling", "Canal", "Chambers", "Chapel", "Cemetery", "Churc(?:h|ii)",
-  "City", "Club", "College", "Colliery", "Company", "Co[nu]su(?:late)?", "Corner", 
-  "Courts?", "Depot", "Distillery", "Establishment", "Exchange", "Exhibition", 
-  "Factory", "Faculty", "Forge", "Foundry", "Hall", "Home", "Hosiery", 
-  "Incorporation", "Infirmary", "Insurance", "Institution", "Library", "Loan", 
-  "Lodge", "Manufact(?:urer|ory)", "Market", "Medical", "Mills?", "Mining", 
-  "Model", "National", "Necropolis", "Newspaper", "Office", "Packets", "Parcels?", 
-  "Parish", "Park", "Patent", "Place", "Presbyterian", "Property", "Public", 
-  "Quarries", "Railway", "Refuge", "Rooms", "Rope", "Royal", "Republic", "\\b\\w?Rooms?\\b", 
-  "School", "Seminary", "Shelter", "Shipping", "Shop", "Society", "Station", "Store", 
-  "Street", "Traders", "Union", "University", "Vinegar", "Warehouse", "\\b\\w?Works?\\b"
-  )
-stop_titles <- c(
-  "Advisee", "Capt(?:ain)?", "Rev"
-)
 
 ### Irrelevant ####
 
 #### Companies, institutions, public places, etc. ####
-# surname contains stop words as listed in the stop_surname above
+# surname contains stop words as listed in the stop_places and stop_titles above
 general_directory_filtered <- filter(
   general_directory_raw, 
-  !grepl(paste0("\\b(?:", paste(stop_places, collapse = "|"), ")"), surname, ignore.case=TRUE, perl=TRUE), 
-  !grepl(paste0("\\b(?:", paste(stop_titles, collapse = "|"), ")"), surname, ignore.case=TRUE, perl=TRUE)
+  !grepl(paste0("\\b(?:", paste(filter$words, collapse = "|"), ")"), surname, ignore.case=TRUE, perl=TRUE)
+  # , 
+  # !grepl(paste0("\\b(?:", paste(filter$titles, collapse = "|"), ")"), surname, ignore.case=TRUE, perl=TRUE)
   )
 #### Clerics, militaries, etc. ####
-general_directory_filtered <- filter(
+general_directory_filtered <- general_directory_filtered <- filter(
   general_directory_filtered, 
-  !grepl(paste0("\\b(?:", paste(stop_titles, collapse = "|"), ")"), surname, ignore.case=TRUE, perl=TRUE)
-)  
+  if_all(
+    surname:occupation, 
+    ~ !grepl(paste0("\\b(?:", paste(filter$titles, collapse = "|"), ")"), .x, ignore.case=TRUE, perl=TRUE)
+  )
+)
 
 ### Partnerships ####
-# any column contains "& Co." or "& son(s)" (ampersand corrected for OCR errors through the ampersand variable above)
+# surname contains an ampersand between two names
 general_directory_filtered <- filter(
   general_directory_filtered, 
-  if_all(.cols = everything(), ~ !grepl(paste0(paste(ampersand, collapse = "|"), "\\s(?:Co\\.|Sons?)"), .x, ignore.case=TRUE, perl=TRUE))
+  if_all(
+    .cols = everything(), 
+    ~ !grepl(
+      paste0("[A-Z](?:\\.?|[a-z]+)\\s(?:", paste(globals$ampersand, collapse = "|"), ")\\s[A-Z](?:\\.?|[a-z]+)"), 
+      .x, ignore.case=TRUE, perl=TRUE)
+  )
 )
-# any column contains "and" between two names
+# surname contains "Bros" or "Brothers"
 general_directory_filtered <- filter(
   general_directory_filtered, 
-  if_all(.cols = everything(), ~ !grepl("[A-Z][a-z]?\\.?\\sand\\s[A-Z][a-z]?\\.?", .x, perl=TRUE))
+  if_all(
+    .cols = everything(), ~ !grepl("\\bBro(?:ther)?s\\b", .x, ignore.case=TRUE, perl=TRUE)
+  )
 )
-# any column contains "of" followed by an optional space and a capital letter
+# any column contains "&/and Co." or "&/and son(s)" (ampersand corrected for OCR errors through the ampersand variable above)
 general_directory_filtered <- filter(
   general_directory_filtered, 
-  if_all(.cols = everything(), ~ !grepl("\\bof\\s?[A-Z]", .x, perl=TRUE))
+  if_all(
+    .cols = everything(), 
+    ~ !grepl(paste0("(?:^|\\s)(?:and|", paste(globals$ampersand, collapse = "|"), ")\\s?(?:Co\\.?|Sons?)"), .x, ignore.case=TRUE, perl=TRUE)
+  )
+)
+# any column starts with an ampersand followed by a space and a name
+general_directory_filtered <- filter(
+  general_directory_filtered, 
+  if_all(
+    .cols = everything(), 
+    ~ !grepl(paste0("^(?:", paste(globals$ampersand, collapse = "|"), ")\\s[A-Z](?:\\.?|[a-z]+|[A-Z])"), .x, ignore.case=TRUE, perl=TRUE)
+  )
+)
+# any column contains "and" or ampersand between two names
+general_directory_filtered <- filter(
+  general_directory_filtered, 
+  if_all(
+    .cols = everything(),
+    ~ !grepl(
+      paste0("[A-Z](?:\\.|[a-z]+)\\s(?:and|", paste(globals$ampersand, collapse = "|"), ")\\s?[A-Z](?:\\.?|[a-z]+|[A-Z])"), 
+      .x, perl=TRUE
+    )
+  )
+)
+
+# any column contains "of" followed by an ampersand somewhere followed by a space and a capital letter
+general_directory_filtered <- filter(
+  general_directory_filtered, 
+  if_all(
+    .cols = everything(), 
+    ~ !grepl(paste0("(?:^|\\s)of.+\\b,?\\s(?:", paste(globals$ampersand, collapse = "|"), ")\\s?\\b[A-Z]"), .x, perl=TRUE))
 )
 
 
@@ -114,13 +149,47 @@ general_directory_filtered <- read_rds(path)
 
 
 
+## Fix structure ####
+
+### split trade and house addresses when both are provided
+# if occupation terminates in "; house" or variant, delete and add "house, " to the beginning of addresses columns
+general_directory_structured <- mutate(
+  general_directory_filtered,
+  addresses = ifelse(
+    grepl(";\\sho(?:use|-)$", occupation, ignore.case=TRUE, perl=TRUE),
+    paste("house", addresses, sep = ", "), addresses
+  ),
+  occupation = ifelse(
+    grepl(";\\sho(?:use|-)$", occupation, ignore.case=TRUE, perl=TRUE),
+    gsub(";\\sho(?:use|-)$", "", occupation, ignore.case = TRUE, perl = TRUE), occupation
+    )
+)
+
+# create trade and house addresses by splitting raw addresses on "house" or variant
+general_directory_structured <- mutate(
+  general_directory_structured,
+  address.trade = ifelse(
+    grepl("(?<!^)\\bho(?:use)?(?:\\.|,)", addresses, ignore.case=TRUE, perl=TRUE),
+    regmatches(addresses, gregexpr(".+(?=\\s?;\\sho)", addresses, perl=TRUE)),
+    ifelse(grepl("^ho(?:use)?(?:\\.|,)", addresses, ignore.case=TRUE, perl=TRUE), "", addresses)
+  ),
+  address.house = ifelse(
+    grepl("\\bho(?:use)?(?:\\.|,)", addresses, ignore.case=TRUE, perl=TRUE),
+    regmatches(addresses, gregexpr("\\bho(?:use)?(?:\\.|,)\\s?\\K.+", addresses, perl=TRUE)),
+    ""
+  )
+)
 
 
-
-
-
-
-
+## IO ####
+path <- here(
+  "Scripts", "extract-load-transform", "trade-directories", "general-directory",
+  "general_directory_structured.rds"
+)
+### Save ####
+write_rds(general_directory_structured, path)
+### Load ####
+general_directory_structured <- read_rds(path)
 
 
 
