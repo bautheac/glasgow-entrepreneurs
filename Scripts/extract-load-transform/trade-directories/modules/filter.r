@@ -15,8 +15,14 @@ words <- c(
   "School", "Seminary", "Shelter", "Shipping", "Shop", "Society", "Station", "Store", 
   "Street", "Traders", "Union", "University", "Vinegar", "Warehouse", "\\b(?:[A-Za-z]+)?Works?\\b"
 )
+
 titles <- c(
-  "Advisee", "Capt(?:ain)?", "Lieutenant", "Rev\\.", "Minister"
+  "Advisee", "Capt(?:ain)?", "Lieutenant", "Major", "Rev\\.", "Minister"
 )
 
+places <- c("glasgow")
+
+occupations <- c(
+  "Church officer" 
+)
 

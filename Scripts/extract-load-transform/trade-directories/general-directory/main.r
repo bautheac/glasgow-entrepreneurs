@@ -2,14 +2,13 @@ library(magrittr); library(here); library(tidyverse); library(modules)
 
 # Load modules ####
 globals <- use(
-  here(
-    "Scripts", "extract-load-transform", "trade-directories", "modules", "globals.r"
-  )
+  here("Scripts", "extract-load-transform", "trade-directories", "modules", "globals.r")
 )
 filter <- use(
-  here(
-    "Scripts", "extract-load-transform", "trade-directories", "modules", "filter.r"
-  )
+  here("Scripts", "extract-load-transform", "trade-directories", "modules", "filter.r")
+)
+clean <- use(
+  here("Scripts", "extract-load-transform", "trade-directories", "modules", "clean.r")
 )
 
 # Using parsed data from python2 pod parser
@@ -22,10 +21,12 @@ general_directory_raw <- map_df(directories, function(x){
   
   # browser()
   con <- file(paste(path, x, "general-directory.txt", sep = "/"), "r")
+  # con <- file(paste(path, x, "general-directory-sample.txt", sep = "/"), "r")
   
   while ( TRUE ) {
     # browser()
     line = readLines(con, n = 1)
+    message(line)
     if ( length(line) == 0 ) {
       break
     }
@@ -42,110 +43,22 @@ general_directory_raw <- map_df(directories, function(x){
       )
     }
   }
-  mutate(general_directory, page = gsub("(?:page|\t)", "", page, ignore.case = TRUE, perl = TRUE)) %>%
-    mutate_all(.funs = str_squish)
-  
+  mutate(general_directory, directory = x, page = gsub("(?:page|\t)", "", page, ignore.case = TRUE, perl = TRUE)) %>%
+    mutate(across(.cols = everything(), str_squish)) %>% select(directory, everything())
 })
   
 
 ## IO ####
-path <- here(
+path_raw <- here(
   "Scripts", "extract-load-transform", "trade-directories", "general-directory",
   "general-directory-records-raw.rds"
 )
 ### Save ####
-write_rds(general_directory_raw, path)
+write_rds(general_directory_raw, path_raw)
 ### Load ####
-general_directory_raw <- read_rds(path)
+general_directory_raw <- read_rds(path_raw)
 
 
-
-
-## Filter out ####
-
-### Irrelevant ####
-
-#### Companies, institutions, public places, etc. ####
-# surname contains stop words as listed in the stop_places and stop_titles above
-general_directory_filtered <- filter(
-  general_directory_raw, 
-  !grepl(paste0("\\b(?:", paste(filter$words, collapse = "|"), ")"), surname, ignore.case=TRUE, perl=TRUE)
-  # , 
-  # !grepl(paste0("\\b(?:", paste(filter$titles, collapse = "|"), ")"), surname, ignore.case=TRUE, perl=TRUE)
-  )
-#### Clerics, militaries, etc. ####
-general_directory_filtered <- general_directory_filtered <- filter(
-  general_directory_filtered, 
-  if_all(
-    surname:occupation, 
-    ~ !grepl(paste0("\\b(?:", paste(filter$titles, collapse = "|"), ")"), .x, ignore.case=TRUE, perl=TRUE)
-  )
-)
-
-### Partnerships ####
-# surname contains an ampersand between two names
-general_directory_filtered <- filter(
-  general_directory_filtered, 
-  if_all(
-    .cols = everything(), 
-    ~ !grepl(
-      paste0("[A-Z](?:\\.?|[a-z]+)\\s(?:", paste(globals$ampersand, collapse = "|"), ")\\s[A-Z](?:\\.?|[a-z]+)"), 
-      .x, ignore.case=TRUE, perl=TRUE)
-  )
-)
-# surname contains "Bros" or "Brothers"
-general_directory_filtered <- filter(
-  general_directory_filtered, 
-  if_all(
-    .cols = everything(), ~ !grepl("\\bBro(?:ther)?s\\b", .x, ignore.case=TRUE, perl=TRUE)
-  )
-)
-# any column contains "&/and Co." or "&/and son(s)" (ampersand corrected for OCR errors through the ampersand variable above)
-general_directory_filtered <- filter(
-  general_directory_filtered, 
-  if_all(
-    .cols = everything(), 
-    ~ !grepl(paste0("(?:^|\\s)(?:and|", paste(globals$ampersand, collapse = "|"), ")\\s?(?:Co\\.?|Sons?)"), .x, ignore.case=TRUE, perl=TRUE)
-  )
-)
-# any column starts with an ampersand followed by a space and a name
-general_directory_filtered <- filter(
-  general_directory_filtered, 
-  if_all(
-    .cols = everything(), 
-    ~ !grepl(paste0("^(?:", paste(globals$ampersand, collapse = "|"), ")\\s[A-Z](?:\\.?|[a-z]+|[A-Z])"), .x, ignore.case=TRUE, perl=TRUE)
-  )
-)
-# any column contains "and" or ampersand between two names
-general_directory_filtered <- filter(
-  general_directory_filtered, 
-  if_all(
-    .cols = everything(),
-    ~ !grepl(
-      paste0("[A-Z](?:\\.|[a-z]+)\\s(?:and|", paste(globals$ampersand, collapse = "|"), ")\\s?[A-Z](?:\\.?|[a-z]+|[A-Z])"), 
-      .x, perl=TRUE
-    )
-  )
-)
-
-# any column contains "of" followed by an ampersand somewhere followed by a space and a capital letter
-general_directory_filtered <- filter(
-  general_directory_filtered, 
-  if_all(
-    .cols = everything(), 
-    ~ !grepl(paste0("(?:^|\\s)of.+\\b,?\\s(?:", paste(globals$ampersand, collapse = "|"), ")\\s?\\b[A-Z]"), .x, perl=TRUE))
-)
-
-
-## IO ####
-path <- here(
-  "Scripts", "extract-load-transform", "trade-directories", "general-directory",
-  "general-directory-records-filtered.rds"
-)
-### Save ####
-write_rds(general_directory_filtered, path)
-### Load ####
-general_directory_filtered <- read_rds(path)
 
 
 
@@ -153,43 +66,150 @@ general_directory_filtered <- read_rds(path)
 
 ### split trade and house addresses when both are provided
 # if occupation terminates in "; house" or variant, delete and add "house, " to the beginning of addresses columns
+regex_house <- ";\\s[bh][op](?:use|-)$"
 general_directory_structured <- mutate(
-  general_directory_filtered,
+  general_directory_raw,
   addresses = ifelse(
-    grepl(";\\sho(?:use|-)$", occupation, ignore.case=TRUE, perl=TRUE),
+    grepl(regex_house, occupation, ignore.case=TRUE, perl=TRUE),
     paste("house", addresses, sep = ", "), addresses
-  ),
+  ) %>% unlist(),
   occupation = ifelse(
-    grepl(";\\sho(?:use|-)$", occupation, ignore.case=TRUE, perl=TRUE),
-    gsub(";\\sho(?:use|-)$", "", occupation, ignore.case = TRUE, perl = TRUE), occupation
-    )
+    grepl(regex_house, occupation, ignore.case=TRUE, perl=TRUE),
+    gsub(regex_house, "", occupation, ignore.case=TRUE, perl=TRUE), occupation
+  ) %>% unlist()
+)
+
+# clean beginning and end of addresses
+general_directory_structured <- mutate(
+  general_directory_structured, across(.cols = matches("^address"), clean$address_clean_ends)
+)
+
+# fix occupation in addresses column when possible: move back to occupation column.
+regex_occupations <- paste0(
+  "^(?:and\\s?)?(?:", 
+  paste(globals$occupations, collapse = "|"), 
+  ").+(?=;|\\d|[A-Z]|$)"
+)
+general_directory_structured <- mutate(
+  general_directory_structured,
+  occupation = ifelse(
+    grepl(regex_occupations, addresses, ignore.case=FALSE, perl=TRUE),
+    paste(occupation, regmatches(addresses, gregexpr(regex_occupations, addresses, ignore.case=FALSE, perl=TRUE)), sep = " "),
+    occupation
+  ) %>% unlist(),
+  addresses = ifelse(
+    grepl(regex_occupations, addresses, ignore.case=FALSE, perl=TRUE),
+    gsub(regex_occupations, "", addresses, ignore.case=FALSE, perl=TRUE), 
+    addresses
+  ) %>% unlist()
+)
+
+# clean beginning and end of addresses
+general_directory_structured <- mutate(
+  general_directory_structured, across(.cols = matches("^address"), clean$address_clean_ends)
+)
+
+# get rid of "depot", "office", "store", "works" or "workshops" address prefix
+general_directory_structured <- mutate(
+  general_directory_structured,
+  addresses = gsub("\\b(?:depot|(?<!post\\s)office|stores|work(?:shop)?s?)\\b", "", addresses, ignore.case=TRUE, perl=TRUE)
+)
+
+# clean beginning and end of addresses
+general_directory_structured <- mutate(
+  general_directory_structured, across(.cols = matches("^address"), clean$address_clean_ends)
 )
 
 # create trade and house addresses by splitting raw addresses on "house" or variant
+## if "residence" matches, don't match "house", otherwise match "house".  
+regex_house <- "(?:^|[;,„\\s]*)\\b(res(?:id)?(?:ence)?)?(?(1)()|((?:(?:[bht]|li|jh)[aop])(?:[ui\\/]se)?s?))\\b[.,„\\s]+"
+general_directory_structured <- separate(
+  general_directory_structured, col = addresses, into = c("addresses.trade", "address.house"),
+  sep = regex_house, remove = TRUE, extra = "merge"
+) %>% mutate(address.house = ifelse(is.na(address.house), "", address.house))
+
+# clean beginning and end of addresses
+general_directory_structured <- mutate(
+  general_directory_structured, 
+  across(.cols = matches("^address"), clean$address_clean_ends)
+)
+
+# clean address numbers
+general_directory_structured <- mutate(
+  general_directory_structured,
+  across(.cols = matches("^address"), clean$address_number)
+) 
+
+# split multiple trade addresses
+split <- paste0(
+  "(?<=",
+  paste(
+    "^",
+    ";",
+    "(?<=\\D\\D)\\s\\ba[an]d\\b\\s(?=[A-Z0-9])",
+    "(?<=\\D\\D)\\s\\ba[an]d,\\b\\s(?=[A-Z0-9])",
+    "(?<=[\\D.])\\s\\&\\s(?=[A-Z0-9])",
+    "(?<=[\\D.])\\&(?=[A-Z0-9])",
+    "(?<!and|\\d),\\s(?!and|\\D)",
+    sep = "|"),
+  ")",
+  ".+?",
+  "(?=(?:",
+  paste(
+    ";",
+    "$",
+    "(?<=\\D\\D)\\s\\ba[an]d\\b\\s(?=[A-Z0-9])",
+    "(?<=\\D\\D)\\s\\ba[an]d,\\b\\s(?=[A-Z0-9])",
+    # "(?<=\\D),\\s\\ba[an]d\\b\\s(?=[A-Z0-9])",
+    "(?<=[\\D.])\\s\\&\\s(?=[A-Z0-9])",
+    "(?<=[\\D.])\\&(?=[A-Z0-9])",
+    "(?<!and|\\d),\\s(?!and|\\D)",
+    sep = "|"),
+  "))"
+)
+
 general_directory_structured <- mutate(
   general_directory_structured,
   address.trade = ifelse(
-    grepl("(?<!^)\\bho(?:use)?(?:\\.|,)", addresses, ignore.case=TRUE, perl=TRUE),
-    regmatches(addresses, gregexpr(".+(?=\\s?;\\sho)", addresses, perl=TRUE)),
-    ifelse(grepl("^ho(?:use)?(?:\\.|,)", addresses, ignore.case=TRUE, perl=TRUE), "", addresses)
-  ),
-  address.house = ifelse(
-    grepl("\\bho(?:use)?(?:\\.|,)", addresses, ignore.case=TRUE, perl=TRUE),
-    regmatches(addresses, gregexpr("\\bho(?:use)?(?:\\.|,)\\s?\\K.+", addresses, perl=TRUE)),
-    ""
+    addresses.trade == "", addresses.trade,
+    regmatches(
+      addresses.trade, gregexpr(split, addresses.trade, ignore.case=FALSE, perl=TRUE)
+    )
   )
+) %>% unnest(address.trade)
+
+# clean beginning and end of addresses
+general_directory_structured <- mutate(
+  general_directory_structured, 
+  across(.cols = matches("^address"), clean$address_clean_ends)
+)
+
+# clean failed split on "and"
+general_directory_structured <- mutate(
+  general_directory_structured,
+  address.trade = ifelse(
+    grepl("^and\\s\\d", address.trade, ignore.case=TRUE, perl=TRUE),
+    regmatches(address.trade, gregexpr("^and\\s\\K.+", address.trade, perl=TRUE)),
+    address.trade
+  ) %>% unlist()
+) 
+
+# clean beginning and end of addresses
+general_directory_structured <- mutate(
+  general_directory_structured, 
+  across(.cols = matches("^address"), clean$address_clean_ends)
 )
 
 
 ## IO ####
-path <- here(
+path_structured <- here(
   "Scripts", "extract-load-transform", "trade-directories", "general-directory",
-  "general_directory_structured.rds"
+  "general-directory-records-structured.rds"
 )
 ### Save ####
-write_rds(general_directory_structured, path)
+write_rds(general_directory_structured, path_structured)
 ### Load ####
-general_directory_structured <- read_rds(path)
+general_directory_structured <- read_rds(path_structured)
 
 
 
@@ -198,131 +218,129 @@ general_directory_structured <- read_rds(path)
 
 
 
+## Clean entries ####
 
+### Get rid of irrelevant info
+general_directory_clean <- mutate(
+  general_directory_structured,
+  across(
+    .cols = everything(), 
+    ~ gsub("(?:character\\(0\\)?\\.?|\\s— See.+|Appendix.+)", "", .x, ignore.case = TRUE, perl = TRUE)
+  ),
+) 
 
+### Clean occupation
+general_directory_clean <- mutate(
+  general_directory_clean,
+  occupation = gsub("(.*)\\(.*", "\\1", occupation, ignore.case = TRUE, perl = TRUE),
+  occupation = str_squish(occupation) %>% str_to_sentence()
+) 
 
+### Clean name ####
 
+#### Clean credentials ####
+sub_regex <- paste0(
+  "[[:punct:][:blank:]]*(?:", paste(globals$titles$pattern, collapse = "|"), 
+  ")[[:punct:][:blank:]]*"
+)
+general_directory_clean <- mutate(
+  general_directory_clean,
+  across(.cols = matches("name"), ~ gsub(sub_regex, "", .x, ignore.case = TRUE, perl = TRUE)),
+) 
 
+#### Clean forename
+general_directory_clean <- mutate(
+  general_directory_clean,
+  forename = clean$forename(forename) %>% str_to_title()
+) 
 
-# Pulling directly from directory files
+#### Clean surname
+general_directory_clean <- mutate(
+  general_directory_clean,
+  surname = clean$surname(surname) %>% str_to_title()
+) 
 
-library(tabulizer); library(magrittr)
+### Clean addresses
 
-# Increase memory allocation to Java from default. Avoid 'Java heap space' out
-# of memory issue
-options(java.parameters = "-Xmx6000m"); library(rJava)
+#### Split numbers and address bodies
+general_directory_clean <- mutate(
+  general_directory_clean,
+  across(
+    .cols = c(address.trade, address.house), 
+    ~ ifelse(
+      grepl("^[0-9,\\s/]+?(?=\\s[[:alpha:]])", .x, perl=TRUE),
+      regmatches(.x, gregexpr("^[0-9,\\s/]+?(?=\\s[[:alpha:]])", .x, perl=TRUE)),
+      ""
+    ) %>% unlist(),
+    .names = "{.col}.number"
+  ),
+  across(
+    .cols = c(address.trade, address.house), 
+    ~ ifelse(
+      !grepl("^$", .x, perl=TRUE),
+      regmatches(.x, gregexpr("^(?:[0-9,\\s/]+?(?=[[:alpha:]]))?\\K.+", .x, perl=TRUE)),
+      ""
+    ) %>% unlist(),
+    .names = "{.col}.body"
+  )
+) %>% 
+  select(-c(address.trade, address.house))
 
-# Java specific garbage collection function. 
-jgc <- function() .jcall("java/lang/System", method = "gc")
+#### Clean beginning and end of addresses
+general_directory_clean <- mutate(
+  general_directory_clean, across(.cols = matches("^address"), clean$address_clean_ends)
+)
 
+#### Clean address bodies
+general_directory_clean <- mutate(
+  general_directory_clean,
+  across(.cols = matches("body$"), clean$address_body)
+) 
 
-# List individual registries here with pages detail for sections of interest.
-`1861-1862` <- tibble::tibble(
-  directory = rep(c("1861-1862"), 2L),
-  url = rep(here::here("Data", "Trade-directory-1861-1862.pdf"), 2L),
-  section = rep(c("persons", "professions")),
-  start = c(69L, 465L), end = c(338L, 593L)
+#### Label missing addresses ####
+general_directory_clean <- mutate(
+  general_directory_clean,
+  address.trade.body = ifelse(
+    (address.trade.number == "" & address.trade.body == ""), 
+    "No trade address found", address.trade.body
+  ),
+  address.house.body = ifelse(
+    (address.house.number == "" & address.house.body == ""), 
+    "No home address found", address.house.body
+  )
 )
 
 
-# Bind the registries defined above for systematic processing.
-directories <- dplyr::bind_rows(`1861-1862`)
+#### Arrange by surname, forename, occupation, address number and body
+general_directory_clean <- select(
+  general_directory_clean,
+  surname, forename, occupation, matches("^address.trade"), matches("^address.house")
+) %>%
+  arrange(surname, forename, occupation)
 
-# Split records
 
-split_regex <- paste0(
-  "(?i)(?(?<=st|st\\.|street|street\\.|pl|pl\\.|place|place\\.",
-  "|ho|ho\\.|house|house\\.|res|res\\.|resid|resid\\.|residence|residence\\.)", 
-  "\\v(?=${start_letter})|(?<=\\.)\\v)"
+
+## IO ####
+path_clean <- here(
+  "Scripts", "extract-load-transform", "trade-directories", "general-directory",
+  "general-directory-records-clean.rds"
 )
-
-# split_entries <- paste0(
-#   "(?i)(?(?=st|ho|pl|st\\.|ho\\.)\\v(?=${start_letter})|(?<=\\.)\\v)"
-# )
-# 
-# split_entries <- paste0(
-#   "(?i)(?<!;\\.)(?<!;\\s?\\.)(?<!,\\s?\\.)(?<!bo\\.)(?<!jas\\.)(?<!he\\.)",
-#   "(?<!ho\\.)(?<!a\\.)(?<!rev\\.)(?<!co\\.)(?<!rest\\.)(?<!house\\.)(?<!r\\.)",
-#   "(?<=\\.|pl|st)",
-#   "\\v",
-#   "(?!;)(?!${start_letter})"
-# )
-# 
-# split_entries <- paste0(
-#   "(?i)",
-#   "(?<![;,ar]\\s\\.)(?<![;,ar]\\.)",
-#   "(?<!([bch]o|he|st)\\.)",
-#   "\\v",
-#   "(?!;)",
-#   "(?=${start_letter})"
-# )
-
-
-general_directory_raw <- purrr::pmap_df(dplyr::filter(directories, section == "persons"), function(...){
-  # browser()
-  args <- rlang::list2(...)
-  path <- args$url; pages <- seq(args$start, args$end)
-  
-  # purrr::map_chr(pages, function(x){
-  purrr::map_df(69:75L, function(x){
-    # purrr::map_df(75L, function(x){
-    message(x)
-    # browser()
-    raw <- tabulizer::extract_text(path, pages = x)
-    
-    start_letter <- stringr::str_locate(raw, "(?<!OFFICE)\\n")[1, "end"] + 1L
-    start_letter <- stringr::str_sub(raw, start_letter, start_letter)
-    
-    start <- regexpr("(?<=(?<!OFFICE)\\n).", raw, perl = TRUE)
-    raw %<>% stringr::str_sub(start) 
-    
-    raw <- gsub('\\\"\\v', "", raw, perl = TRUE)
-    raw <- gsub("([[:punct:]])\\s?[[:punct:]]", "\\1 ", raw, perl = TRUE)
-    raw <- gsub("(?!)he\\.", "ho\\.", raw, perl = TRUE)
-    raw <- gsub("\\s(—)", "\\1", raw, perl = TRUE)
-    raw <- gsub("\\v(ho|res)", " \\1", raw, perl = TRUE)
-    raw <- gsub("(?<=[[:alpha:]])\\.(?=[[:alpha:]])", " ", raw, perl = TRUE)
-    
-    records <- strsplit(raw, stringr::str_interp(split_entries), perl = TRUE)
-    
-    gc(); jgc()
-    tibble::tibble(directory = args$directory, page = x, record = records) %>%
-      tidyr::unnest(record)
-  })
-})
+### Save ####
+write_rds(general_directory_clean, path_clean)
+### Load ####
+general_directory_clean <- read_rds(path_clean)
 
 
 
-general_directory_clean <- dplyr::mutate(
-  general_directory_raw,
-  record = gsub("([[:punct:]])\\1", "\\1 ", record, perl = TRUE),
-  record = gsub("„", ", ", record, perl = TRUE),
-  record = gsub("(?<=\\w)([[:punct:]])(?=\\w)", "\\1 ", record, perl = TRUE),
-  record = gsub("(?<=[[:alpha:]])-\\n(?=[[:alpha:]])", "", record, perl = TRUE),
-  record = gsub(
-    paste0(
-      "<%|<§|\\$|4\'|4\\~|rj-|6f|<J\'|<\\||\'|<J\\*|if|<f|tf\\s|tf(?=[A-Z])|ij",
-      "|cf|#|<j-|d-|cj\\*|",
-      '\\scf\\s|\\sq\\s|\\sfy\\s|\\s§\\s|\\s<\\s|\\s4\"\\s'
-    ), "&", record, perl = TRUE),
-  record = gsub("\\s?&\\s?", " & ", record, perl = TRUE),
-  record = gsub("4 Co", "& Co", record, perl = TRUE),
-  record = gsub("([A-Za-z]\\.? )4( [A-Z])", "\\1&\\2", record, perl = TRUE),
-  record = gsub("(\\d)\\v", "\\1 ", record, perl = TRUE),
-  record = gsub("([a-z0-9])([A-Z])", "\\1 \\2", record, perl = TRUE),
-  record = gsub("(\\d)\\s(\\d)", "\\1\\2", record, perl = TRUE),
-  record = gsub("•", "", record, perl = TRUE),
-  record = gsub("\\s?-\\s?", "-", record, perl = TRUE),
-  record = gsub("\\s?\\s\\s?", " ", record, perl = TRUE),
-  record = gsub("XT'", "W", record, perl = TRUE),
-  record = gsub("} r", "y", record, perl = TRUE),
-  record = gsub("(?i)(?<=[a-z])\\^(?=\\s)", "", record, perl = TRUE)
+
+# Sample: Surname starts with A
+sample <- filter(general_directory_clean, stringr::str_detect(surname, "^A"))
+## IO ####
+path_clean <- here(
+  "Scripts", "extract-load-transform", "trade-directories", "general-directory",
+  "general-directory-records-clean-sample.rds"
 )
+### Save ####
+write_rds(sample, path_clean)
 
-openxlsx::write.xlsx(
-  general_directory_clean, 
-  here::here("Data", "Trade-directories.xlsx"), 
-  sheetName = "persons",
-  append = TRUE
-)
 
